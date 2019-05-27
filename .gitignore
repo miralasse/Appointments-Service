@@ -1,0 +1,22 @@
+## Intellij
+.idea/
+*.iml
+*.iws
+
+## Java
+*.class
+*.war
+*.ear
+
+
+## Gradle
+/local.properties
+.gradle/
+gradle-app.setting
+/build/
+/android/build/
+/core/build/
+/desktop/build/
+/html/build/
+/ios/build/
+/ios-moe/build/
