@@ -1,0 +1,35 @@
+image: openjdk:8
+
+cache:
+  key: "$CI_BUILD_REF_NAME"
+  paths:
+    - node_modules
+    - .gradle
+    - gradle/wrapper
+stages:
+  - build
+  - test
+
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
+  - chmod +x gradlew
+  - export IMAGE_NAME=vs-$CI_PROJECT_NAME
+gradle-build:
+  stage: build
+  script: ./gradlew classes -Dmaven.repo.local=$GRADLE_USER_HOME
+
+gradle-checkstyle:
+    stage: test
+    script:
+        - ./gradlew checkstyleMain checkstyleTest -x testClasses -Dmaven.repo.local=$GRADLE_USER_HOME
+    artifacts:
+        reports:
+            junit: build/reports/checkstyle/*.html
+
+gradle-test:
+  stage: test
+  script:
+      - ./gradlew verify test -Dmaven.repo.local=$GRADLE_USER_HOME
+  artifacts:
+      reports:
+          junit: build/test-results/test/TEST-*.xml
