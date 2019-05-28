@@ -12,8 +12,7 @@
 ## Gradle
 /local.properties
 .gradle/
-gradle-app.setting
-/build/
+gradle-app.setting/build/
 /android/build/
 /core/build/
 /desktop/build/
