@@ -29,7 +29,7 @@ gradle-checkstyle:
 gradle-test:
   stage: test
   script:
-      - ./gradlew verify test -Dmaven.repo.local=$GRADLE_USER_HOME
+      - ./gradlew test -Dmaven.repo.local=$GRADLE_USER_HOME
   artifacts:
       reports:
           junit: build/test-results/test/TEST-*.xml
