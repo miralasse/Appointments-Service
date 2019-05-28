@@ -3,19 +3,43 @@ package main.java.domain;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Класс, описывающий сущность Запись на прием (Бронь).
+ * Содержит:
+ * - дату и время начала приема для этого талона
+ * - ссылку на расписание (объект Schedule), в котором осуществляется эта запись на прием
+ * - ссылку на услугу (объект Service), которая выбрана как цель обращения при бронировании времени
+ * - флаг активности
+ * - ссылку на ребёнка (объект Child), в интересах которого осуществлена эта запись на прием
+ */
 public class Reservation {
-    private Integer id;
+
+    private Long id;
+
+    /** Поле даты и времени начала приема для этого талона */
     private LocalDateTime dateTime;
+
+    /** Поле Ссылка на расписание (объект Schedule), в котором осуществляется эта запись на прием */
     private Schedule schedule;
+
+    /** Поле Ссылка на услугу (объект Service), которая выбрана как цель обращения при бронировании времени */
     private Service service;
+
+    /** Поле Флаг активности */
     private boolean active;
+
+    /** Поле Ссылка на ребёнка (объект Child), в интересах которого осуществлена эта запись на прием */
     private Child child;
 
-    public Integer getId() {
+
+    public Reservation() {
+    }
+
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -61,6 +85,7 @@ public class Reservation {
 
     @Override
     public boolean equals(Object o) {
+
         if (this == o) return true;
         if (!(o instanceof Reservation)) return false;
         Reservation that = (Reservation) o;

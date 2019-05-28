@@ -6,21 +6,56 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Класс, описывающий сущность Расписание.
+ * Содержит:
+ * - ссылку на специалиста, к которому относится это расписание;
+ * - дату, на которую формируется это расписание;
+ * - список услуг (объекты Service), которые доступны в списке выбора при бронировании времени в этом расписании
+ * - время начала приема
+ * - время окончания приема
+ * - длительность приема одного талона
+ * - список забронированных интервалов времени (записей на прием - объекты Reservation) в этом расписании
+ * - флаг активности
+ */
 public class Schedule {
 
-    /* здесь не использую id, т.к. предполагаю сделать первичный ключ составным специалист + дата,
-    чтобы нельзя было добавить несколько расписаний для одного специалиста на одну дату */
+    private Long id;
 
+    /** Поле Ссылка на специалиста, к которому относится это расписание приема */
     private Specialist specialist;
+
+    /** Поле Дата, на которую формируется это расписание */
     private LocalDate date;
+
+    /** Поле Список услуг (ссылки на объекты Услуг), которые доступны в списке выбора при бронировании времени в этом расписании */
     private List<Service> services;
+
+    /** Поле Время начала приема */
     private LocalTime startTime;
+
+    /** Поле Время окончания приема */
     private LocalTime endTime;
+
+    /** Поле Длительность/Интервал приема одного талона */
     private Duration interval;
+
+    /** Поле Список забронированных интервалов времени (ссылки на объекты Reservation) в этом расписании */
     private List<Reservation> reservations;
+
+    /** Поле Флаг активности этого расписания */
     private boolean active;
 
+
     public Schedule() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Specialist getSpecialist() {
@@ -94,6 +129,7 @@ public class Schedule {
         if (!(o instanceof Schedule)) return false;
         Schedule schedule = (Schedule) o;
         return isActive() == schedule.isActive() &&
+                Objects.equals(getId(), schedule.getId()) &&
                 Objects.equals(getSpecialist(), schedule.getSpecialist()) &&
                 Objects.equals(getDate(), schedule.getDate()) &&
                 Objects.equals(getServices(), schedule.getServices()) &&
@@ -105,6 +141,6 @@ public class Schedule {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSpecialist(), getDate(), getServices(), getStartTime(), getEndTime(), getInterval(), getReservations(), isActive());
+        return Objects.hash(getId(), getSpecialist(), getDate(), getServices(), getStartTime(), getEndTime(), getInterval(), getReservations(), isActive());
     }
 }

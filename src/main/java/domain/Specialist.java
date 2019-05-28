@@ -2,12 +2,26 @@ package main.java.domain;
 
 import java.util.Objects;
 
+/**
+ * Класс, описывающий сущность Специалист (сотрудник, ведущий прием).
+ * Содержит имя (ФИО/должность), номер кабинета, флаг активности и ссылку на организацию, к которой относится специалист.
+ */
 public class Specialist {
-    private Integer id;    //использован Integer вместо int, чтобы не было значения по-умолчанию 0
-    private String position;
+
+    private Integer id;
+
+    /** Поле для указания должности или ФИО специалиста для отображения на сайте */
+    private String name;
+
+    /** Поле Номер кабинета */
     private Integer roomNumber;
+
+    /** Поле Флаг активности специалиста */
     private boolean active;
+
+    /** Поле Ссылка на организацию (объект Organization), к которой относится специалист */
     private Organization organization;
+
 
     public Specialist() {
     }
@@ -20,12 +34,12 @@ public class Specialist {
         this.id = id;
     }
 
-    public String getPosition() {
-        return position;
+    public String getName() {
+        return name;
     }
 
-    public void setPosition(String position) {
-        this.position = position;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Integer getRoomNumber() {
@@ -60,13 +74,13 @@ public class Specialist {
         Specialist that = (Specialist) o;
         return isActive() == that.isActive() &&
                 Objects.equals(getId(), that.getId()) &&
-                Objects.equals(getPosition(), that.getPosition()) &&
+                Objects.equals(getName(), that.getName()) &&
                 Objects.equals(getRoomNumber(), that.getRoomNumber()) &&
                 Objects.equals(getOrganization(), that.getOrganization());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getPosition(), getRoomNumber(), isActive(), getOrganization());
+        return Objects.hash(getId(), getName(), getRoomNumber(), isActive(), getOrganization());
     }
 }

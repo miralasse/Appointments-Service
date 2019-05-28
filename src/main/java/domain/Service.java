@@ -2,10 +2,20 @@ package main.java.domain;
 
 import java.util.Objects;
 
+/**
+ * Класс, описывающий сущность Услуга (Цель обращения).
+ * Содержит название и флаг активности услуги.
+ */
 public class Service {
+
     private Integer id;
+
+    /** Поле Название */
     private String name;
+
+    /** Поле Флаг активности */
     private boolean active;
+
 
     public Service() {
     }

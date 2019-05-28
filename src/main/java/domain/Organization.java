@@ -2,11 +2,23 @@ package main.java.domain;
 
 import java.util.Objects;
 
+/**
+ * Класс, описывающий сущность Организация.
+ * Содержит название, фактический адрес и описание с контактной информацией.
+ */
 public class Organization {
+
     private Integer id;
+
+    /** Поле Название */
     private String name;
+
+    /** Поле Фактический адрес */
     private String actualAddress;
+
+    /** Поле Описание для внесения контактной и другой полезной информации */
     private String description;
+
 
     public Organization() {
     }
@@ -45,6 +57,7 @@ public class Organization {
 
     @Override
     public boolean equals(Object o) {
+
         if (this == o) return true;
         if (!(o instanceof Organization)) return false;
         Organization that = (Organization) o;

@@ -2,22 +2,60 @@ package main.java.domain;
 
 import java.util.Objects;
 
+/**
+ * Класс, описывающий сущность Ребёнок.
+ * Содержит серию и номер свидельства о рождении, ФИО и контактную информацию
+ */
 public class Child {
-    private Long birthCertificateNumber;
+
+    private Integer id;
+
+    /** Поле Серия свидетельства о рождении */
+    private String birthCertificateSeries;
+
+    /** Поле Номер свидетельства о рождении */
+    private Integer birthCertificateNumber;
+
+    /** Поле Контактный номер телефона */
     private String phoneNumber;
+
+    /** Поле Электронная почта */
     private String email;
-    /*
-    для текущей задачи поля ФИО не указаны, но вероятнее всего они нужны в дальнейшем
-     */
+
+    /** Поле Фамилия ребёнка */
     private String lastName;
+
+    /** Поле Имя ребёнка */
     private String firstName;
+
+    /** Поле Отчество ребёнка */
     private String patronymic;
 
-    public Long getBirthCertificateNumber() {
+
+    public Child() {
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getBirthCertificateSeries() {
+        return birthCertificateSeries;
+    }
+
+    public void setBirthCertificateSeries(String birthCertificateSeries) {
+        this.birthCertificateSeries = birthCertificateSeries;
+    }
+
+    public Integer getBirthCertificateNumber() {
         return birthCertificateNumber;
     }
 
-    public void setBirthCertificateNumber(Long birthCertificateNumber) {
+    public void setBirthCertificateNumber(Integer birthCertificateNumber) {
         this.birthCertificateNumber = birthCertificateNumber;
     }
 
@@ -63,10 +101,13 @@ public class Child {
 
     @Override
     public boolean equals(Object o) {
+
         if (this == o) return true;
         if (!(o instanceof Child)) return false;
         Child child = (Child) o;
-        return Objects.equals(getBirthCertificateNumber(), child.getBirthCertificateNumber()) &&
+        return Objects.equals(getId(), child.getId()) &&
+                Objects.equals(getBirthCertificateSeries(), child.getBirthCertificateSeries()) &&
+                Objects.equals(getBirthCertificateNumber(), child.getBirthCertificateNumber()) &&
                 Objects.equals(getPhoneNumber(), child.getPhoneNumber()) &&
                 Objects.equals(getEmail(), child.getEmail()) &&
                 Objects.equals(getLastName(), child.getLastName()) &&
@@ -76,6 +117,6 @@ public class Child {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getBirthCertificateNumber(), getPhoneNumber(), getEmail(), getLastName(), getFirstName(), getPatronymic());
+        return Objects.hash(getId(), getBirthCertificateSeries(), getBirthCertificateNumber(), getPhoneNumber(), getEmail(), getLastName(), getFirstName(), getPatronymic());
     }
 }
