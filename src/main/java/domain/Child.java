@@ -1,10 +1,12 @@
-package main.java.domain;
+package domain;
 
 import java.util.Objects;
 
 /**
  * Класс, описывающий сущность Ребёнок.
  * Содержит серию и номер свидельства о рождении, ФИО и контактную информацию
+ *
+ * @author yanchenko_evgeniya
  */
 public class Child {
 
@@ -104,19 +106,20 @@ public class Child {
 
         if (this == o) return true;
         if (!(o instanceof Child)) return false;
-        Child child = (Child) o;
-        return Objects.equals(getId(), child.getId()) &&
-                Objects.equals(getBirthCertificateSeries(), child.getBirthCertificateSeries()) &&
-                Objects.equals(getBirthCertificateNumber(), child.getBirthCertificateNumber()) &&
-                Objects.equals(getPhoneNumber(), child.getPhoneNumber()) &&
-                Objects.equals(getEmail(), child.getEmail()) &&
-                Objects.equals(getLastName(), child.getLastName()) &&
-                Objects.equals(getFirstName(), child.getFirstName()) &&
-                Objects.equals(getPatronymic(), child.getPatronymic());
+        Child child = (Child)o;
+        return Objects.equals(getId(), child.getId())
+                && Objects.equals(getBirthCertificateSeries(), child.getBirthCertificateSeries())
+                && Objects.equals(getBirthCertificateNumber(), child.getBirthCertificateNumber())
+                && Objects.equals(getPhoneNumber(), child.getPhoneNumber())
+                && Objects.equals(getEmail(), child.getEmail())
+                && Objects.equals(getLastName(), child.getLastName())
+                && Objects.equals(getFirstName(), child.getFirstName())
+                && Objects.equals(getPatronymic(), child.getPatronymic());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getBirthCertificateSeries(), getBirthCertificateNumber(), getPhoneNumber(), getEmail(), getLastName(), getFirstName(), getPatronymic());
+        return Objects.hash(getId(), getBirthCertificateSeries(), getBirthCertificateNumber(),
+                getPhoneNumber(), getEmail(), getLastName(), getFirstName(), getPatronymic());
     }
 }

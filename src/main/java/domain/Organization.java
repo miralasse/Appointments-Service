@@ -1,10 +1,12 @@
-package main.java.domain;
+package domain;
 
 import java.util.Objects;
 
 /**
  * Класс, описывающий сущность Организация.
  * Содержит название, фактический адрес и описание с контактной информацией.
+ *
+ * @author yanchenko_evgeniya
  */
 public class Organization {
 
@@ -60,15 +62,16 @@ public class Organization {
 
         if (this == o) return true;
         if (!(o instanceof Organization)) return false;
-        Organization that = (Organization) o;
-        return Objects.equals(getId(), that.getId()) &&
-                Objects.equals(getName(), that.getName()) &&
-                Objects.equals(getActualAddress(), that.getActualAddress()) &&
-                Objects.equals(getDescription(), that.getDescription());
+        Organization that = (Organization)o;
+        return Objects.equals(getId(), that.getId())
+                && Objects.equals(getName(), that.getName())
+                && Objects.equals(getActualAddress(), that.getActualAddress())
+                && Objects.equals(getDescription(), that.getDescription());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getActualAddress(), getDescription());
+        return Objects.hash(getId(), getName(),
+                getActualAddress(), getDescription());
     }
 }

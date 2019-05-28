@@ -1,10 +1,13 @@
-package main.java.domain;
+package domain;
 
 import java.util.Objects;
 
 /**
  * Класс, описывающий сущность Специалист (сотрудник, ведущий прием).
- * Содержит имя (ФИО/должность), номер кабинета, флаг активности и ссылку на организацию, к которой относится специалист.
+ * Содержит имя (ФИО/должность), номер кабинета,
+ * флаг активности и ссылку на организацию, к которой относится специалист.
+ *
+ * @author yanchenko_evgeniya
  */
 public class Specialist {
 
@@ -71,16 +74,17 @@ public class Specialist {
 
         if (this == o) return true;
         if (!(o instanceof Specialist)) return false;
-        Specialist that = (Specialist) o;
-        return isActive() == that.isActive() &&
-                Objects.equals(getId(), that.getId()) &&
-                Objects.equals(getName(), that.getName()) &&
-                Objects.equals(getRoomNumber(), that.getRoomNumber()) &&
-                Objects.equals(getOrganization(), that.getOrganization());
+        Specialist that = (Specialist)o;
+        return isActive() == that.isActive()
+                && Objects.equals(getId(), that.getId())
+                && Objects.equals(getName(), that.getName())
+                && Objects.equals(getRoomNumber(), that.getRoomNumber())
+                && Objects.equals(getOrganization(), that.getOrganization());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getRoomNumber(), isActive(), getOrganization());
+        return Objects.hash(getId(), getName(), getRoomNumber(),
+                isActive(), getOrganization());
     }
 }

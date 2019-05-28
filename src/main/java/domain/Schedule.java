@@ -1,4 +1,4 @@
-package main.java.domain;
+package domain;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -17,6 +17,8 @@ import java.util.Objects;
  * - длительность приема одного талона
  * - список забронированных интервалов времени (записей на прием - объекты Reservation) в этом расписании
  * - флаг активности
+ *
+ * @author yanchenko_evgeniya
  */
 public class Schedule {
 
@@ -28,7 +30,8 @@ public class Schedule {
     /** Поле Дата, на которую формируется это расписание */
     private LocalDate date;
 
-    /** Поле Список услуг (ссылки на объекты Услуг), которые доступны в списке выбора при бронировании времени в этом расписании */
+    /** Поле Список услуг (ссылки на объекты Услуг),
+     * которые доступны в списке выбора при бронировании времени в этом расписании */
     private List<Service> services;
 
     /** Поле Время начала приема */
@@ -127,20 +130,21 @@ public class Schedule {
 
         if (this == o) return true;
         if (!(o instanceof Schedule)) return false;
-        Schedule schedule = (Schedule) o;
-        return isActive() == schedule.isActive() &&
-                Objects.equals(getId(), schedule.getId()) &&
-                Objects.equals(getSpecialist(), schedule.getSpecialist()) &&
-                Objects.equals(getDate(), schedule.getDate()) &&
-                Objects.equals(getServices(), schedule.getServices()) &&
-                Objects.equals(getStartTime(), schedule.getStartTime()) &&
-                Objects.equals(getEndTime(), schedule.getEndTime()) &&
-                Objects.equals(getInterval(), schedule.getInterval()) &&
-                Objects.equals(getReservations(), schedule.getReservations());
+        Schedule schedule = (Schedule)o;
+        return isActive() == schedule.isActive()
+                && Objects.equals(getId(), schedule.getId())
+                && Objects.equals(getSpecialist(), schedule.getSpecialist())
+                && Objects.equals(getDate(), schedule.getDate())
+                && Objects.equals(getServices(), schedule.getServices())
+                && Objects.equals(getStartTime(), schedule.getStartTime())
+                && Objects.equals(getEndTime(), schedule.getEndTime())
+                && Objects.equals(getInterval(), schedule.getInterval())
+                && Objects.equals(getReservations(), schedule.getReservations());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getSpecialist(), getDate(), getServices(), getStartTime(), getEndTime(), getInterval(), getReservations(), isActive());
+        return Objects.hash(getId(), getSpecialist(), getDate(), getServices(),
+                getStartTime(), getEndTime(), getInterval(), getReservations(), isActive());
     }
 }

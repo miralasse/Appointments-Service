@@ -1,4 +1,4 @@
-package main.java.domain;
+package domain;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -11,6 +11,8 @@ import java.util.Objects;
  * - ссылку на услугу (объект Service), которая выбрана как цель обращения при бронировании времени
  * - флаг активности
  * - ссылку на ребёнка (объект Child), в интересах которого осуществлена эта запись на прием
+ *
+ * @author yanchenko_evgeniya
  */
 public class Reservation {
 
@@ -88,17 +90,18 @@ public class Reservation {
 
         if (this == o) return true;
         if (!(o instanceof Reservation)) return false;
-        Reservation that = (Reservation) o;
-        return isActive() == that.isActive() &&
-                Objects.equals(getId(), that.getId()) &&
-                Objects.equals(getDateTime(), that.getDateTime()) &&
-                Objects.equals(getSchedule(), that.getSchedule()) &&
-                Objects.equals(getService(), that.getService()) &&
-                Objects.equals(getChild(), that.getChild());
+        Reservation that = (Reservation)o;
+        return isActive() == that.isActive()
+                && Objects.equals(getId(), that.getId())
+                && Objects.equals(getDateTime(), that.getDateTime())
+                && Objects.equals(getSchedule(), that.getSchedule())
+                && Objects.equals(getService(), that.getService())
+                && Objects.equals(getChild(), that.getChild());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getDateTime(), getSchedule(), getService(), isActive(), getChild());
+        return Objects.hash(getId(), getDateTime(), getSchedule(),
+                getService(), isActive(), getChild());
     }
 }
