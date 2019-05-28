@@ -10,6 +10,10 @@
 
 
 ## Gradle
+gradle/wrapper/
+gradlew
+gradlew.bat
+settings.gradle
 /local.properties
 .gradle/
 gradle-app.setting/build/

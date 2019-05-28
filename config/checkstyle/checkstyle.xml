@@ -1,0 +1,188 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.1//EN"
+        "http://www.puppycrawl.com/dtds/configuration_1_1.dtd">
+
+<module name="Checker">
+
+    <property name="charset" value="UTF-8"/>
+
+    <!--
+    <module name="SuppressionFilter">
+        <property name="file" value="tools/checkstyle/suppressions.xml"/>
+    </module>
+    -->
+
+    <module name="TreeWalker">
+
+        <property name="tabWidth" value="4"/>
+
+        <!--1-->
+
+        <!--Проверки импортов-->
+        <module name="AvoidStarImport"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
+        <!--<module name="ImportOrder">-->
+        <!--&lt;!&ndash;<property name="groups" value="com,java,javax,org,ru"/>&ndash;&gt;-->
+        <!--&lt;!&ndash;<property name="ordered" value="true"/>&ndash;&gt;-->
+        <!--<property name="groups" value=""/>-->
+        <!--<property name="separated" value="false"/>-->
+        <!--<property name="severity" value="warning"/>-->
+        <!--</module>-->
+
+        <!--Условие на JavaDoc-->
+        <module name="JavadocType">
+            <property name="scope" value="package"/>
+            <property name="authorFormat" value="^[a-zA-Zа-яА-ЯёЁ0-9-_]*$"/>
+            <property name="allowMissingParamTags" value="true"/>
+            <property name="allowUnknownTags" value="true"/>
+        </module>
+
+        <!--Условие на максимальную длину строки-->
+        <module name="LineLength">
+            <property name="max" value="120"/>
+        </module>
+
+
+        <!--2-->
+
+        <!--Условия на именование-->
+        <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+            <property name="tokens" value="CLASS_DEF"/>
+        </module>
+
+        <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+            <property name="tokens" value="INTERFACE_DEF"/>
+        </module>
+
+        <module name="MemberName"/>
+        <module name="MethodName"/>
+        <module name="LocalFinalVariableName"/>
+        <module name="LocalVariableName"/>
+        <module name="ParameterName"/>
+        <module name="StaticVariableName"/>
+
+        <module name="ConstantName">
+            <property name="format" value="^[A-Z\_]*$"/>
+        </module>
+
+
+        <!--3-->
+
+
+        <!--Условие на порядок следования объявлений-->
+        <module name="DeclarationOrder"/>
+
+        <!--Условие на скобки-->
+        <module name="LeftCurly">
+            <property name="option" value="eol"/>
+            <property name="maxLineLength" value="120"/>
+        </module>
+
+        <!--Проверка на отсутствие конструктора. В абстрактных классах не проверяет-->
+        <!--<module name="MissingCtor"/>-->
+
+
+        <!--4-->
+
+
+        <!--Условие на длину метода (не считаем конструкторы). Пустые строки и однострочные (//) каменты не считаются-->
+        <module name="MethodLength">
+            <property name="max" value="50"/>
+            <property name="countEmpty" value="false"/>
+            <property name="tokens" value="METHOD_DEF"/>
+        </module>
+
+        <!--Условие на длину конструктора (не считаем методы). Пустые строки и однострочные (//) каменты не считаются-->
+        <module name="MethodLength">
+            <property name="max" value="200"/>
+            <property name="countEmpty" value="false"/>
+            <property name="tokens" value="CTOR_DEF"/>
+        </module>
+
+
+        <!--5-->
+
+
+        <!--Одно условие в строке-->
+        <module name="OneStatementPerLine"/>
+
+        <!--Тольк одно объявление переменной на одной строке-->
+        <module name="MultipleVariableDeclarations"/>
+
+        <!--Проверка на одинокий знак ; -->
+        <module name="EmptyStatement"/>
+
+        <module name="MethodParamPad"/>
+
+        <!--Проверка на скобки везде-->
+        <module name="NeedBraces">
+            <property name="allowSingleLineStatement" value="true"/>
+        </module>
+
+        <!--Условие на правую скобку-->
+        <module name="RightCurly"/>
+
+        <!--Параметры для пробелов-->
+        <module name="GenericWhitespace"/>
+
+        <module name="WhitespaceAround">
+            <property name="tokens"
+                      value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR, BXOR_ASSIGN, DIV, DIV_ASSIGN, EQUAL, GE, GT, LAND, LCURLY, LE, LITERAL_ASSERT, LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE, LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF, LITERAL_RETURN, LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS, MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION, RCURLY, SL, SLIST, SL_ASSIGN, SR, SR_ASSIGN, STAR, STAR_ASSIGN,TYPE_EXTENSION_AND"/>
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+        </module>
+
+        <module name="NoWhitespaceAfter">
+            <property name="tokens" value="ARRAY_INIT, BNOT, DEC, DOT, INC, LNOT, UNARY_MINUS, UNARY_PLUS, TYPECAST"/>
+        </module>
+
+        <!--Пробел после запятой-->
+        <module name="WhitespaceAfter">
+            <property name="tokens" value="COMMA"/>
+        </module>
+
+        <!--Правила для переносов строк-->
+        <module name="OperatorWrap">
+            <property name="tokens"
+                      value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN, EQUAL, GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR, LT, MINUS, MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION, SL, SL_ASSIGN, SR, SR_ASSIGN, STAR, STAR_ASSIGN"/>
+            <property name="option" value="nl"/>
+        </module>
+
+
+        <!--6-->
+
+
+        <!--Условие на JavaDoc-->
+        <!--<module name="JavadocMethod">-->
+        <!--<property name="scope" value="public"/>-->
+        <!--<property name="allowMissingPropertyJavadoc" value="true"/>-->
+        <!--<property name="severity" value="warning"/>-->
+        <!--</module>-->
+
+
+        <!--7-->
+
+        <module name="MagicNumber"/>
+
+        <module name="MultipleStringLiterals">
+            <property name="severity" value="warning"/>
+        </module>
+
+        <!--<module name="FinalLocalVariable">-->
+        <!--<property name="severity" value="warning"/>-->
+        <!--</module>-->
+
+        <module name="SimplifyBooleanReturn">
+            <property name="severity" value="warning"/>
+        </module>
+
+        <module name="StringLiteralEquality"/>
+
+
+    </module>
+
+</module>
+

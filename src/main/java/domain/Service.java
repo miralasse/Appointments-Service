@@ -1,10 +1,12 @@
-package main.java.domain;
+package domain;
 
 import java.util.Objects;
 
 /**
  * Класс, описывающий сущность Услуга (Цель обращения).
  * Содержит название и флаг активности услуги.
+ *
+ * @author yanchenko_evgeniya
  */
 public class Service {
 
@@ -49,10 +51,10 @@ public class Service {
 
         if (this == o) return true;
         if (!(o instanceof Service)) return false;
-        Service service = (Service) o;
-        return isActive() == service.isActive() &&
-                Objects.equals(getId(), service.getId()) &&
-                Objects.equals(getName(), service.getName());
+        Service service = (Service)o;
+        return isActive() == service.isActive()
+                && Objects.equals(getId(), service.getId())
+                && Objects.equals(getName(), service.getName());
     }
 
     @Override
