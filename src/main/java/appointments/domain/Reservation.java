@@ -1,7 +1,13 @@
-package domain;
+package appointments.domain;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 /**
  * Класс, описывающий сущность Запись на прием (Бронь).
@@ -14,6 +20,12 @@ import java.util.Objects;
  *
  * @author yanchenko_evgeniya
  */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class Reservation {
 
     private Long id;
@@ -33,75 +45,4 @@ public class Reservation {
     /** Поле Ссылка на ребёнка (объект Child), в интересах которого осуществлена эта запись на прием */
     private Child child;
 
-
-    public Reservation() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public LocalDateTime getDateTime() {
-        return dateTime;
-    }
-
-    public void setDateTime(LocalDateTime dateTime) {
-        this.dateTime = dateTime;
-    }
-
-    public Schedule getSchedule() {
-        return schedule;
-    }
-
-    public void setSchedule(Schedule schedule) {
-        this.schedule = schedule;
-    }
-
-    public Service getService() {
-        return service;
-    }
-
-    public void setService(Service service) {
-        this.service = service;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public Child getChild() {
-        return child;
-    }
-
-    public void setChild(Child child) {
-        this.child = child;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-
-        if (this == o) return true;
-        if (!(o instanceof Reservation)) return false;
-        Reservation that = (Reservation)o;
-        return isActive() == that.isActive()
-                && Objects.equals(getId(), that.getId())
-                && Objects.equals(getDateTime(), that.getDateTime())
-                && Objects.equals(getSchedule(), that.getSchedule())
-                && Objects.equals(getService(), that.getService())
-                && Objects.equals(getChild(), that.getChild());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getId(), getDateTime(), getSchedule(),
-                getService(), isActive(), getChild());
-    }
 }
