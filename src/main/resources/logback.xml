@@ -1,0 +1,31 @@
+<configuration>
+
+    <property name="APP_LOG" value="logs/app.log"/>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${APP_LOG}</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+
+            <!-- daily rollover -->
+            <fileNamePattern>logs/archived/app.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>[%thread] %-5level %logger{35}::%M at %L - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="appointments" level="DEBUG" additivity="false">
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>

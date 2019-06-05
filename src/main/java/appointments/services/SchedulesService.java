@@ -6,6 +6,7 @@ import appointments.domain.Service;
 import appointments.domain.Specialist;
 import appointments.exceptions.ScheduleNotFoundException;
 import appointments.repos.SchedulesRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.util.List;
  *
  * @author yanchenko_evgeniya
  */
+@Slf4j
 @org.springframework.stereotype.Service
 public class SchedulesService {
 
@@ -50,33 +52,44 @@ public class SchedulesService {
     ) {
 
         if (specialist == null) {
+            log.error("Parameter 'specialist' is null");
             throw new IllegalArgumentException(EMPTY_SPECIALIST_MESSAGE);
         }
         if (date == null || date.isBefore(LocalDate.now())) {
+            log.error("Value of parameter 'date' is incorrect or null: {}", date);
             throw new IllegalArgumentException(INCORRECT_DATE_MESSAGE);
         }
         if (services == null) {
+            log.error("Parameter 'services' is null");
             throw new IllegalArgumentException(EMPTY_SERVICES_MESSAGE);
         }
         if (startTime == null) {
+            log.error("Parameter 'startTime' is null");
             throw new IllegalArgumentException(EMPTY_START_TIME_MESSAGE);
         }
         if (endTime == null) {
+            log.error("Parameter 'endTime' is null");
             throw new IllegalArgumentException(EMPTY_END_TIME_MESSAGE);
         }
         if (interval == null) {
+            log.error("Parameter 'interval' is null");
             throw new IllegalArgumentException(EMPTY_INTERVAL_MESSAGE);
         }
         if (reservations == null) {
+            log.error("Parameter 'reservation' is null");
             throw new IllegalArgumentException(NULL_RESERVATIONS_MESSAGE);
         }
 
-        final Schedule schedule = new Schedule(
+        final Schedule schedule = schedulesRepository.save(
+                new Schedule(
                 null, specialist, date, services, startTime, endTime,
                 interval, reservations, active
+                )
         );
 
-        return schedulesRepository.save(schedule);
+        log.info("Added new schedule: {}", schedule);
+
+        return schedule;
     }
 
     /** Метод для удаления расписания по идентификатору */
@@ -84,6 +97,7 @@ public class SchedulesService {
     public void removeSchedule(final Long id) {
 
         if (id == null) {
+            log.error(EMPTY_ID_MESSAGE);
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
         final Schedule schedule = schedulesRepository
@@ -91,13 +105,18 @@ public class SchedulesService {
                 .orElseThrow(() -> new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE));
 
         schedulesRepository.delete(schedule);
+
+        log.info("Schedule with id = {} deleted", id);
     }
 
     /** Метод для поиска расписания по идентификатору */
     @Transactional(readOnly = true)
     public Schedule findScheduleById(final Long id) {
 
+        log.debug("Finding schedule with id = {}", id);
+
         if (id == null) {
+            log.error(EMPTY_ID_MESSAGE);
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
 
@@ -109,6 +128,9 @@ public class SchedulesService {
     /** Метод для получения списка расписаний */
     @Transactional(readOnly = true)
     public List<Schedule> getSchedules() {
+
+        log.debug("Getting list of all schedules");
+
         return schedulesRepository.findAll();
     }
 }
