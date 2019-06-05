@@ -2,7 +2,9 @@ package appointments.services;
 
 import appointments.domain.Service;
 import appointments.exceptions.ServiceNotFoundException;
-import appointments.utils.DatabaseEmulator;
+import appointments.repos.ServicesRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -14,59 +16,56 @@ import static com.google.common.base.Strings.isNullOrEmpty;
  *
  * @author yanchenko_evgeniya
  */
+@org.springframework.stereotype.Service
 public class ServicesService {
 
-    /** Строковая константа для передачи в исключение, возникающее, если ID услуги не заполнен */
     private static final String EMPTY_ID_MESSAGE = "ID услуги не должен быть пустым";
-
-    /** Строковая константа для передачи в исключение, возникающее, если услуга с указанным ID не найдена*/
     private static final String SERVICE_NOT_FOUND_MESSAGE = "Услуга не найдена. ID: ";
 
-    /** Поле для хранения экземпляра эмулятора базы данных */
-    private DatabaseEmulator databaseEmulator;
+    /** Поле для хранения экземпляра репозитория */
+    private ServicesRepository servicesRepository;
 
-    public ServicesService() {
-        databaseEmulator = DatabaseEmulator.getInstance();
+    @Autowired
+    public ServicesService(ServicesRepository servicesRepository) {
+        this.servicesRepository = servicesRepository;
     }
 
     /** Метод для добавления новой цели обращения (услуги) в справочник */
-    public Integer addService(final String name, final boolean active) {
+    @Transactional
+    public Service addService(final String name, final boolean active) {
 
         if (isNullOrEmpty(name)) {
             throw new IllegalArgumentException("Название услуги не должно быть пустым");
         }
-        Service service = new Service(null, name, active);
 
-        return databaseEmulator.addService(service);
+        return servicesRepository.save(new Service(null, name, active));
     }
 
     /** Метод для удаления цели обращения (услуги) по идентификатору */
-    public boolean removeService(final Integer id) {
+    @Transactional
+    public void removeService(final Integer id) {
 
         if (id == null) {
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
-        final Service service = databaseEmulator.findServiceById(id);
-        if (service == null) {
-            throw new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id);
-        }
+        final Service service = servicesRepository
+                .findById(id)
+                .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id));
 
-        return databaseEmulator.removeService(service);
+        servicesRepository.delete(service);
     }
 
     /** Метод для поиска цели обращения по идентификатору */
+    @Transactional(readOnly = true)
     public Service findServiceById(final Integer id) {
 
         if (id == null) {
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
-        final Service service = databaseEmulator.findServiceById(id);
-        if (service == null) {
-            throw new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE);
-        } else {
 
-            return service;
-        }
+        return servicesRepository
+                .findById(id)
+                .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE));
     }
 
     /** Метод для активации цели обращения (услуги) */
@@ -80,21 +79,24 @@ public class ServicesService {
     }
 
     /** Служебный метод для смены флага активности цели обращения (услуги) */
+    @Transactional
     private void changeActiveState(final Integer id, final boolean makeActive) {
+
         if (id == null) {
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
-        final Service service = databaseEmulator.findServiceById(id);
-        if (service == null) {
-            throw new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id);
-        }
+        final Service service = servicesRepository
+                .findById(id)
+                .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id));
 
         service.setActive(makeActive);
+        servicesRepository.save(service);
     }
 
     /** Метод для получения списка целей обращения (услуг) */
+    @Transactional(readOnly = true)
     public List<Service> getServices() {
-        return databaseEmulator.getServices();
+        return servicesRepository.findAll();
     }
 
 

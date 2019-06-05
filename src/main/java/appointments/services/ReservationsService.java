@@ -6,11 +6,15 @@ import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.exceptions.ReservationAlreadyExistsException;
 import appointments.exceptions.ReservationNotFoundException;
-import appointments.utils.DatabaseEmulator;
+import appointments.repos.ReservationsRepository;
+import appointments.repos.SchedulesRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import static java.util.stream.Collectors.toList;
 
@@ -21,66 +25,60 @@ import static java.util.stream.Collectors.toList;
  *
  * @author yanchenko_evgeniya
  */
+@org.springframework.stereotype.Service
 public class ReservationsService {
 
-    /** Строковая константа для передачи в исключение, возникающее, если ID записи на прием не заполнен */
     private static final String EMPTY_ID_MESSAGE = "ID записи на прием не должен быть пустым";
-
-    /** Строковая константа для передачи в исключение, возникающее, если запись на прием с указанным ID не найдена */
     private static final String RESERVATION_NOT_FOUND_MESSAGE = "Запись на прием не найдена. ID: ";
-
-    /** Строковая константа для передачи в исключение,
-     * возникающее, если не указана или некорректная дата и время записи на прием */
     private static final String INCORRECT_DATETIME_MESSAGE
             = "Дата и время не заполнены или некорректны для указанного расписания";
-
-    /** Строковая константа для передачи в исключение,
-     * возникающее, если не указано расписание,
-     * в котором осуществляется эта запись на прием */
     private static final String EMPTY_SCHEDULE_MESSAGE
             = "Для записи на прием не указано, к какому расписанию она относится";
-
-    /** Строковая константа для передачи в исключение,
-     * возникающее, если не указана цель обращения (услуга) */
     private static final String EMPTY_SERVICE_MESSAGE = "Для записи на прием должна быть указана цель обращения";
-
-    /** Строковая константа для передачи в исключение,
-     * возникающее, если не указан ребенок,
-     * в интересах которого осуществляется запись на прием */
     private static final String EMPTY_CHILD_MESSAGE = "Для записи на прием должен быть указан ребенок";
 
-    /** Поле для хранения экземпляра эмулятора базы данных */
-    private DatabaseEmulator databaseEmulator;
+    /** Поле для хранения экземпляра репозитория записей на прием */
+    private ReservationsRepository reservationsRepository;
 
-    public ReservationsService() {
-        databaseEmulator = DatabaseEmulator.getInstance();
+    /** Поле для хранения экземпляра репозитория расписаний */
+    private SchedulesRepository schedulesRepository;
+
+    @Autowired
+    public ReservationsService(
+            ReservationsRepository reservationsRepository,
+            SchedulesRepository schedulesRepository
+    ) {
+        this.reservationsRepository = reservationsRepository;
+        this.schedulesRepository = schedulesRepository;
     }
 
 
     /** Метод для поиска всех записей на прием в конкретную дату */
+    @Transactional(readOnly = true)
     public List<Reservation> findReservationByDate(final LocalDate date) {
 
         if (date == null) {
             throw new IllegalArgumentException(INCORRECT_DATETIME_MESSAGE);
         }
 
-        return databaseEmulator
-                .getSchedules()
+        return schedulesRepository
+                .findAll()
                 .stream()
                 .filter(s -> s.getDate().equals(date))
-                .flatMap(sch -> sch.getReservations().stream())
+                .flatMap(s -> s.getReservations().stream())
                 .collect(toList());
     }
 
     /** Метод для поиска всех записей на прием за промежуток времени (например, неделю) */
+    @Transactional(readOnly = true)
     public List<Reservation> findReservationByPeriod(final LocalDate startDate, final LocalDate endDate) {
 
         if (startDate == null || endDate == null) {
             throw new IllegalArgumentException(INCORRECT_DATETIME_MESSAGE);
         }
 
-        return databaseEmulator
-                .getSchedules()
+        return schedulesRepository
+                .findAll()
                 .stream()
                 .filter(s -> (!s.getDate().isAfter(endDate) && !s.getDate().isBefore(startDate)))
                 .flatMap(sch -> sch.getReservations().stream())
@@ -88,22 +86,21 @@ public class ReservationsService {
     }
 
     /** Метод для поиска конкретной записи на прием по идентификатору */
+    @Transactional(readOnly = true)
     public Reservation findReservationById(final Long id) {
 
         if (id == null) {
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
-        final Reservation reservation = databaseEmulator.findReservationById(id);
-        if (reservation == null) {
-            throw new ReservationNotFoundException(RESERVATION_NOT_FOUND_MESSAGE);
-        } else {
 
-            return reservation;
-        }
+        return reservationsRepository
+                .findById(id)
+                .orElseThrow(() -> new ReservationNotFoundException(RESERVATION_NOT_FOUND_MESSAGE));
     }
 
     /** Метод для добавления новой записи на прием */
-    public Long addReservation(
+    @Transactional
+    public Reservation addReservation(
             final LocalDateTime wantedDateTime, final Schedule schedule,
             final Service service, final boolean active, final Child child
     ) {
@@ -130,23 +127,45 @@ public class ReservationsService {
         if (wantedTime.isBefore(schedule.getStartTime()) || wantedTime.isAfter(schedule.getEndTime())) {
             throw new IllegalArgumentException(INCORRECT_DATETIME_MESSAGE);
         }
-        final boolean timeIsBusy = schedule
-                .getReservations()
-                .stream()
-                .anyMatch(r -> r.getDateTime().equals(wantedDateTime));
-        if (timeIsBusy) {
+
+        if (checkIfTimeIsBusy(schedule, wantedDateTime)) {
             throw new ReservationAlreadyExistsException("Это время уже занято");
         }
 
-        final Reservation reservation
-                = new Reservation(null, wantedDateTime, schedule, service, active, child);
+        final Reservation reservation = new Reservation(null, wantedDateTime, schedule, service, active, child);
 
-        return databaseEmulator.addReservation(reservation);
+        return reservationsRepository.save(reservation);
     }
 
+    /** Служебный метод для проверки занятости указанного времени в расписании */
+    @Transactional
+    private boolean checkIfTimeIsBusy(Schedule schedule, LocalDateTime wantedDateTime) {
+
+        return schedule
+                .getReservations()
+                .stream()
+                .anyMatch(r -> hasIntersection(r, schedule, wantedDateTime));
+    }
+
+    /** Служебный метод для проверки пересечения времени, на которое хотим осуществить новую запись на прием,
+     * с интервалами уже существующих записей */
+    private boolean hasIntersection(Reservation reservation,
+                                    Schedule schedule,
+                                    LocalDateTime wantedDateTime) {
+
+        return !wantedDateTime.isBefore(reservation.getDateTime())
+                && wantedDateTime.isBefore(
+                    reservation
+                        .getDateTime()
+                        .plus(schedule.getIntervalOfReception(), ChronoUnit.MINUTES)
+                );
+    }
+
+
     /** Метод для получения списка всех записей на прием */
+    @Transactional(readOnly = true)
     public List<Reservation> getReservations() {
-        return databaseEmulator.getReservations();
+        return reservationsRepository.findAll();
     }
 
 

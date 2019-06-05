@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:appointmentsservice;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: appointments-test
+    password:
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    database: H2
+    show-sql: true
+    properties:
+      hibernate.id.new_generator_mappings: false
+      hibernate.connection.provider_disables_autocommit: true
+
+  h2:
+    console:
+      enabled: true
+
+  hibernate:
+    dialect: org.hibernate.dialect.H2Dialect
