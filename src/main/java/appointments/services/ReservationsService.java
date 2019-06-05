@@ -8,6 +8,7 @@ import appointments.exceptions.ReservationAlreadyExistsException;
 import appointments.exceptions.ReservationNotFoundException;
 import appointments.repos.ReservationsRepository;
 import appointments.repos.SchedulesRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import static java.util.stream.Collectors.toList;
  *
  * @author yanchenko_evgeniya
  */
+@Slf4j
 @org.springframework.stereotype.Service
 public class ReservationsService {
 
@@ -57,7 +59,10 @@ public class ReservationsService {
     @Transactional(readOnly = true)
     public List<Reservation> findReservationByDate(final LocalDate date) {
 
+        log.debug("Finding reservation on the date: {}", date);
+
         if (date == null) {
+            log.error("Parameter 'date' is null");
             throw new IllegalArgumentException(INCORRECT_DATETIME_MESSAGE);
         }
 
@@ -73,7 +78,10 @@ public class ReservationsService {
     @Transactional(readOnly = true)
     public List<Reservation> findReservationByPeriod(final LocalDate startDate, final LocalDate endDate) {
 
+        log.debug("Finding reservation within period: {} - {}", startDate, endDate);
+
         if (startDate == null || endDate == null) {
+            log.error("Parameter 'startDate' or 'endDate' is null");
             throw new IllegalArgumentException(INCORRECT_DATETIME_MESSAGE);
         }
 
@@ -89,7 +97,10 @@ public class ReservationsService {
     @Transactional(readOnly = true)
     public Reservation findReservationById(final Long id) {
 
+        log.debug("Finding reservation with id = {}", id);
+
         if (id == null) {
+            log.error("Parameter 'id' is null");
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
 
@@ -106,35 +117,46 @@ public class ReservationsService {
     ) {
 
         if (schedule == null) {
+            log.error("Parameter 'schedule' is null");
             throw new IllegalArgumentException(EMPTY_SCHEDULE_MESSAGE);
         }
         if (service == null) {
+            log.error("Parameter 'service' is null");
             throw new IllegalArgumentException(EMPTY_SERVICE_MESSAGE);
         }
         if (child == null) {
+            log.error("Parameter 'child' is null");
             throw new IllegalArgumentException(EMPTY_CHILD_MESSAGE);
         }
         if (wantedDateTime == null) {
+            log.error("Parameter 'wantedDateTime' is null");
             throw new IllegalArgumentException(INCORRECT_DATETIME_MESSAGE);
         }
 
         final LocalDate wantedDate = wantedDateTime.toLocalDate();
         if (!wantedDate.equals(schedule.getDate())) {
+            log.error("Wanted date is not equal to schedule's date");
             throw new IllegalArgumentException(INCORRECT_DATETIME_MESSAGE);
         }
 
         final LocalTime wantedTime = wantedDateTime.toLocalTime();
         if (wantedTime.isBefore(schedule.getStartTime()) || wantedTime.isAfter(schedule.getEndTime())) {
+            log.error("Wanted time does not match schedule's reception time");
             throw new IllegalArgumentException(INCORRECT_DATETIME_MESSAGE);
         }
 
         if (checkIfTimeIsBusy(schedule, wantedDateTime)) {
+            log.error("Wanted dateTime is already busy with another reservation");
             throw new ReservationAlreadyExistsException("Это время уже занято");
         }
 
-        final Reservation reservation = new Reservation(null, wantedDateTime, schedule, service, active, child);
+        final Reservation reservation = reservationsRepository.save(
+                new Reservation(null, wantedDateTime, schedule, service, active, child)
+        );
 
-        return reservationsRepository.save(reservation);
+        log.info("Added new reservation: {}", reservation);
+
+        return reservation;
     }
 
     /** Служебный метод для проверки занятости указанного времени в расписании */
@@ -165,6 +187,9 @@ public class ReservationsService {
     /** Метод для получения списка всех записей на прием */
     @Transactional(readOnly = true)
     public List<Reservation> getReservations() {
+
+        log.debug("Getting list of all reservations");
+
         return reservationsRepository.findAll();
     }
 

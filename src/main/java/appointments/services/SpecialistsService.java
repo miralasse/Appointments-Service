@@ -4,6 +4,7 @@ import appointments.domain.Organization;
 import appointments.domain.Specialist;
 import appointments.exceptions.SpecialistNotFoundException;
 import appointments.repos.SpecialistsRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
  *
  * @author yanchenko_evgeniya
  */
+@Slf4j
 @Service
 public class SpecialistsService {
 
@@ -43,25 +45,35 @@ public class SpecialistsService {
     ) {
 
         if (isNullOrEmpty(name)) {
+            log.error("Parameter 'name' is null");
             throw new IllegalArgumentException(EMPTY_NAME_MESSAGE);
         }
         if (isNullOrEmpty(roomNumber)) {
+            log.error("Parameter 'roomNumber' is null");
             throw new IllegalArgumentException(EMPTY_ROOM_NUMBER_MESSAGE);
         }
         if (organization == null) {
+            log.error("Parameter 'organization' is null");
             throw new IllegalArgumentException(EMPTY_ORGANIZATION_MESSAGE);
         }
 
-        final Specialist specialist = new Specialist(null, name, roomNumber, active, organization);
+        final Specialist specialist = specialistsRepository.save(
+                new Specialist(null, name, roomNumber, active, organization)
+        );
 
-        return specialistsRepository.save(specialist);
+        log.info("Added new specialist: {}", specialist);
+
+        return specialist;
     }
 
     /** Метод для поиска специалиста по идентификатору */
     @Transactional(readOnly = true)
     public Specialist findSpecialistById(final Integer id) {
 
+        log.debug("Finding specialist with id = {}", id);
+
         if (id == null) {
+            log.error(EMPTY_ID_MESSAGE);
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
 
@@ -78,15 +90,19 @@ public class SpecialistsService {
     ) {
 
         if (id == null) {
+            log.error(EMPTY_ID_MESSAGE);
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
         if (isNullOrEmpty(name)) {
+            log.error("Trying to set 'name' to null");
             throw new IllegalArgumentException(EMPTY_NAME_MESSAGE);
         }
         if (isNullOrEmpty(roomNumber)) {
+            log.error("Trying to set 'roomNumber' to null");
             throw new IllegalArgumentException(EMPTY_ROOM_NUMBER_MESSAGE);
         }
         if (organization == null) {
+            log.error("Trying to set 'organization' to null");
             throw new IllegalArgumentException(EMPTY_ORGANIZATION_MESSAGE);
         }
 
@@ -100,6 +116,8 @@ public class SpecialistsService {
         specialist.setOrganization(organization);
 
         specialistsRepository.save(specialist);
+
+        log.info("Specialist with id = {} edited: {}", id, specialist);
     }
 
     /** Метод для удаления специалиста по идентификатору */
@@ -107,6 +125,7 @@ public class SpecialistsService {
     public void removeSpecialist(final Integer id) {
 
         if (id == null) {
+            log.error(EMPTY_ID_MESSAGE);
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
         final Specialist specialist = specialistsRepository
@@ -114,16 +133,24 @@ public class SpecialistsService {
                 .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE));
 
         specialistsRepository.delete(specialist);
+
+        log.info("Specialist with id = {} deleted", id);
     }
 
     /** Метод для активации специалиста в списке */
     public void activateSpecialist(final Integer id) {
+
         changeActiveState(id, true);
+
+        log.info("Specialist with id = {} activated", id);
     }
 
     /** Метод для деактивации специалиста в списке*/
     public void deactivateSpecialist(final Integer id) {
+
         changeActiveState(id, false);
+
+        log.info("Specialist with id = {} deactivated", id);
     }
 
     /** Служебный метод для смены флага активности специалиста */
@@ -131,6 +158,7 @@ public class SpecialistsService {
     private void changeActiveState(final Integer id, final boolean makeActive) {
 
         if (id == null) {
+            log.error(EMPTY_ID_MESSAGE);
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
         final Specialist specialist = specialistsRepository
@@ -144,6 +172,9 @@ public class SpecialistsService {
     /** Метод для получения списка специалистов */
     @Transactional(readOnly = true)
     public List<Specialist> getSpecialists() {
+
+        log.debug("Getting list of all specialists");
+
         return specialistsRepository.findAll();
     }
 
