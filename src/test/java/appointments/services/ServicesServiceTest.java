@@ -1,12 +1,15 @@
-package services;
+package appointments.services;
 
 import appointments.domain.Service;
 import appointments.exceptions.ServiceNotFoundException;
-import appointments.services.ServicesService;
-import appointments.utils.EmulatorInitializer;
+import appointments.TestHelper;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,98 +17,113 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author yanchenko_evgeniya
  */
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class ServicesServiceTest {
 
-    private static EmulatorInitializer emulatorInitializer = new EmulatorInitializer();
-    private ServicesService servicesService = new ServicesService();
+    private static final String TEST_SERVICE_NAME = "Оформление льготного питания";
 
-    @BeforeClass
-    public static void initCollections() {
-        emulatorInitializer.initAll();
-    }
+    @Autowired
+    private TestHelper testHelper;
+
+    @Autowired
+    private ServicesService servicesService;
 
     @Before
-    public void initTest() {
-        servicesService.getServices().clear();
-        servicesService.getServices().addAll(emulatorInitializer.initServices());
+    public void setUp() {
+
+        testHelper.clearAll();
+        testHelper.initServices();
     }
 
     @Test
+    @Transactional
     public void testAddService() {
 
-        final String serviceName = "Оформление документов";
-        final boolean serviceActive = true;
         final int expectedSize = servicesService.getServices().size() + 1;
 
-        final int id = servicesService.addService(serviceName, serviceActive);
+        final int id = servicesService
+                .addService(TEST_SERVICE_NAME, true)
+                .getId();
 
         final int actualSize = servicesService.getServices().size();
-        final Service testService = new Service(id, serviceName, serviceActive);
+        final Service testService = new Service(id, TEST_SERVICE_NAME, true);
 
         assertThat(servicesService.getServices()).contains(testService);
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @Transactional
     public void testAddServiceWithNullName() {
         servicesService.addService(null, true);
     }
 
     @Test
+    @Transactional
     public void testRemoveService() {
 
-        final String serviceName = "Льготное питание";
-        final boolean serviceActive = true;
-        final int id = servicesService.addService(serviceName, serviceActive);
+
+        final int id = servicesService
+                .addService(TEST_SERVICE_NAME, true)
+                .getId();
         final int expectedSize = servicesService.getServices().size() - 1;
 
         servicesService.removeService(id);
 
         final int actualSize = servicesService.getServices().size();
-        final Service testService = new Service(id, serviceName, serviceActive);
+        final Service testService = new Service(id, TEST_SERVICE_NAME, true);
 
         assertThat(servicesService.getServices()).doesNotContain(testService);
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @Transactional
     public void testRemoveServiceWithNullId() {
         servicesService.removeService(null);
     }
 
     @Test(expected = ServiceNotFoundException.class)
+    @Transactional
     public void testRemoveServiceWithWrongId() {
         servicesService.removeService(Integer.MIN_VALUE);
     }
 
     @Test
+    @Transactional
     public void testFindServiceById() {
-        final String serviceName = "Прием руководителем управления образования";
-        final boolean serviceActive = true;
-        final int id = servicesService.addService(serviceName, serviceActive);
 
-        final Service expectedService = new Service(id, serviceName, serviceActive);
+        final int id = servicesService
+                .addService(TEST_SERVICE_NAME, true)
+                .getId();
+
+        final Service expectedService = new Service(id, TEST_SERVICE_NAME, true);
         final Service actualService = servicesService.findServiceById(id);
 
         assertThat(expectedService).isEqualTo(actualService);
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @Transactional
     public void testFindServiceByIdWithNullId() {
         servicesService.findServiceById(null);
     }
 
     @Test(expected = ServiceNotFoundException.class)
+    @Transactional
     public void testFindServiceByIdWithWrongId() {
         servicesService.findServiceById(Integer.MIN_VALUE);
     }
 
     @Test
+    @Transactional
     public void testActivateService() {
 
-        final String serviceName = "Путевка в летний лагерь";
-        final boolean serviceActive = false;
-        final int id = servicesService.addService(serviceName, serviceActive);
+
+        final int id = servicesService
+                .addService(TEST_SERVICE_NAME, false)
+                .getId();
 
         servicesService.activateService(id);
 
@@ -115,21 +133,25 @@ public class ServicesServiceTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @Transactional
     public void testActivateServiceWithNullId() {
         servicesService.activateService(null);
     }
 
     @Test(expected = ServiceNotFoundException.class)
+    @Transactional
     public void testActivateServiceWrongId() {
         servicesService.activateService(Integer.MIN_VALUE);
     }
 
     @Test
+    @Transactional
     public void testDeactivateService() {
 
-        final String serviceName = "Путевка в детский сад";
-        final boolean serviceActive = true;
-        final int id = servicesService.addService(serviceName, serviceActive);
+
+        final int id = servicesService
+                .addService(TEST_SERVICE_NAME, true)
+                .getId();
 
         servicesService.deactivateService(id);
 
@@ -139,16 +161,19 @@ public class ServicesServiceTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @Transactional
     public void testDeactivateServiceWithNullId() {
         servicesService.deactivateService(null);
     }
 
     @Test(expected = ServiceNotFoundException.class)
+    @Transactional
     public void testDeactivateServiceWrongId() {
         servicesService.deactivateService(Integer.MIN_VALUE);
     }
 
     @Test
+    @Transactional
     public void getServices() {
         assertThat(servicesService.getServices()).isNotNull();
     }

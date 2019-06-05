@@ -5,9 +5,10 @@ import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.domain.Specialist;
 import appointments.exceptions.ScheduleNotFoundException;
-import appointments.utils.DatabaseEmulator;
+import appointments.repos.SchedulesRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -19,49 +20,32 @@ import java.util.List;
  *
  * @author yanchenko_evgeniya
  */
+@org.springframework.stereotype.Service
 public class SchedulesService {
 
-    /** Строковая константа для передачи в исключение, возникающее, если ID расписания не заполнен */
     private static final String EMPTY_ID_MESSAGE = "ID расписания не должен быть пустым";
-
-    /** Строковая константа для передачи в исключение, возникающее, если расписание с указанным ID не найдено */
     private static final String SCHEDULE_NOT_FOUND_MESSAGE = "Расписание не найдено. ID: ";
-
-    /** Строковая константа для передачи в исключение, возникающее, если не указан специалист,
-     * для которого формируется расписание */
     private static final String EMPTY_SPECIALIST_MESSAGE = "Расписание должно быть привязано к специалисту";
-
-    /** Строковая константа для передачи в исключение, возникающее, если не указана дата,
-     * на которую формируется расписание, или дата некорректная */
     private static final String INCORRECT_DATE_MESSAGE = "Для расписания должна быть указана корректная дата";
-
-    /** Строковая константа для передачи в исключение, возникающее, если не указаны услуги для расписания */
     private static final String EMPTY_SERVICES_MESSAGE = "Для расписания должны быть указаны услуги";
-
-    /** Строковая константа для передачи в исключение, возникающее, если не указано время начала приема */
     private static final String EMPTY_START_TIME_MESSAGE = "Время начала приема не может быть пустым";
-
-    /** Строковая константа для передачи в исключение, возникающее, если не указано время окончания приема */
     private static final String EMPTY_END_TIME_MESSAGE = "Время окончания приема не может быть пустым";
-
-    /** Строковая константа для передачи в исключение, возникающее, если не указан интервал приема
-     * (время на один талон) */
     private static final String EMPTY_INTERVAL_MESSAGE = "Интервал приема не может быть пустым";
-
-    /** Строковая константа для передачи в исключение, возникающее, если вместо списка броней NULL */
     private static final String NULL_RESERVATIONS_MESSAGE = "Список броней должен существовать";
 
-    /** Поле для хранения экземпляра эмулятора базы данных */
-    private DatabaseEmulator databaseEmulator;
+    /** Поле для хранения экземпляра репозитория */
+    private SchedulesRepository schedulesRepository;
 
-    public SchedulesService() {
-        databaseEmulator = DatabaseEmulator.getInstance();
+    @Autowired
+    public SchedulesService(SchedulesRepository schedulesRepository) {
+        this.schedulesRepository = schedulesRepository;
     }
 
     /** Метод для добавления нового распиания */
-    public Long addSchedule(
+    @Transactional
+    public Schedule addSchedule(
             final Specialist specialist, final LocalDate date, final List<Service> services,
-            final LocalTime startTime, final LocalTime endTime, final Duration interval,
+            final LocalTime startTime, final LocalTime endTime, final Integer interval,
             final List<Reservation> reservations, final boolean active
     ) {
 
@@ -92,40 +76,39 @@ public class SchedulesService {
                 interval, reservations, active
         );
 
-        return databaseEmulator.addSchedule(schedule);
+        return schedulesRepository.save(schedule);
     }
 
     /** Метод для удаления расписания по идентификатору */
-    public boolean removeSchedule(final Long id) {
+    @Transactional
+    public void removeSchedule(final Long id) {
 
         if (id == null) {
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
-        final Schedule schedule = databaseEmulator.findScheduleById(id);
-        if (schedule == null) {
-            throw new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE);
-        }
+        final Schedule schedule = schedulesRepository
+                .findById(id)
+                .orElseThrow(() -> new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE));
 
-        return databaseEmulator.removeSchedule(schedule);
+        schedulesRepository.delete(schedule);
     }
 
-    /** Метод для поиска цели обращения по идентификатору */
+    /** Метод для поиска расписания по идентификатору */
+    @Transactional(readOnly = true)
     public Schedule findScheduleById(final Long id) {
 
         if (id == null) {
             throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
         }
-        final Schedule schedule = databaseEmulator.findScheduleById(id);
-        if (schedule == null) {
-            throw new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE);
-        } else {
 
-            return schedule;
-        }
+        return schedulesRepository
+                .findById(id)
+                .orElseThrow(() -> new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE));
     }
 
     /** Метод для получения списка расписаний */
+    @Transactional(readOnly = true)
     public List<Schedule> getSchedules() {
-        return databaseEmulator.getSchedules();
+        return schedulesRepository.findAll();
     }
 }
