@@ -1,5 +1,6 @@
 package appointments.services;
 
+import appointments.TestHelper;
 import appointments.domain.Child;
 import appointments.domain.Reservation;
 import appointments.domain.Schedule;
@@ -11,12 +12,12 @@ import appointments.repos.ChildrenRepository;
 import appointments.repos.SchedulesRepository;
 import appointments.repos.ServicesRepository;
 import appointments.repos.SpecialistsRepository;
-import appointments.TestHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author yanchenko_evgeniya
  */
+@ActiveProfiles("test")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class ReservationsServiceTest {

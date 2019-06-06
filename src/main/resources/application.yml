@@ -1,21 +1,15 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:appointmentsservice;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: appointments-test
-    password:
+    platform: postgres
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/appointments_db
+    username: postgres
+    password: 123456
 
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    database: H2
+    database: POSTGRESQL
     show-sql: true
     properties:
       hibernate.id.new_generator_mappings: false
       hibernate.connection.provider_disables_autocommit: true
-
-  h2:
-    console:
-      enabled: true
-
-  hibernate:
-    dialect: org.hibernate.dialect.H2Dialect
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
