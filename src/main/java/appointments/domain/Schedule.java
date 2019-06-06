@@ -66,7 +66,7 @@ public class Schedule {
 
     /** Поле Дата, на которую формируется это расписание */
     @NotNull(message = "Для расписания должна быть указана дата")
-    @Column
+    @Column(name = "date")
     private LocalDate date;
 
 
