@@ -1,24 +1,11 @@
-package appointments.domain;
+package appointments.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.validator.constraints.Range;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -36,70 +23,40 @@ import static appointments.utils.Constants.SCHEDULE_WRONG_INTERVAL_LENGTH;
 
 
 /**
- * Класс, описывающий сущность Расписание.
- * Содержит:
- * - ссылку на специалиста, к которому относится это расписание;
- * - дату, на которую формируется это расписание;
- * - список услуг (объекты Service), которые доступны в списке выбора при бронировании времени в этом расписании
- * - время начала приема
- * - время окончания приема
- * - длительность приема одного талона
- * - список забронированных интервалов времени (записей на прием - объекты Reservation) в этом расписании
- * - флаг активности
- *
  * @author yanchenko_evgeniya
  */
-@Entity
-@Table(name = "schedules")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id")
-@ToString(exclude = "reservations")
-public class Schedule {
+@ToString(exclude = "reservationIds")
+public class ScheduleDTO {
 
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column
     private Long id;
 
 
     /** Поле Ссылка на специалиста, к которому относится это расписание приема */
     @NotNull(message = SCHEDULE_EMPTY_SPECIALIST_MESSAGE)
-    @ManyToOne
-    @JoinColumn(name = "specialist_id")
-    private Specialist specialist;
+    private Integer specialistId;
 
 
     /** Поле Дата, на которую формируется это расписание */
-    @NotNull(message =  SCHEDULE_INCORRECT_DATE_MESSAGE)
-    @Column(name = "date")
+    @NotNull(message = SCHEDULE_INCORRECT_DATE_MESSAGE)
     private LocalDate date;
 
 
     /** Поле Список услуг (ссылки на объекты Услуг),
      * которые доступны в списке выбора при бронировании времени в этом расписании */
     @NotNull(message = SCHEDULE_EMPTY_SERVICES_MESSAGE)
-    @ManyToMany
-    @JoinTable(
-            name = "services_schedules",
-            joinColumns = @JoinColumn(name = "schedule_id"),
-            inverseJoinColumns = @JoinColumn(name = "service_id")
-    )
-    private List<Service> services;
+    private List<Integer> serviceIds;
 
 
     /** Поле Время начала приема */
     @NotNull(message = SCHEDULE_EMPTY_START_TIME_MESSAGE)
-    @Column(name = "start_time")
     private LocalTime startTime;
 
 
     /** Поле Время окончания приема */
     @NotNull(message = SCHEDULE_EMPTY_END_TIME_MESSAGE)
-    @Column(name = "end_time")
     private LocalTime endTime;
 
 
@@ -110,17 +67,14 @@ public class Schedule {
             max = SCHEDULE_MAX_INTERVAL_LENGTH,
             message = SCHEDULE_WRONG_INTERVAL_LENGTH
     )
-    @Column(name = "interval_of_reception")
     private Integer intervalOfReception;
 
 
     /** Поле Список забронированных интервалов времени (ссылки на объекты Reservation) в этом расписании */
-    @OneToMany(mappedBy = "schedule")
-    private List<Reservation> reservations;
+    private List<Long> reservationIds;
 
 
     /** Поле Флаг активности этого расписания */
-    @Column
     private boolean active;
 
 }

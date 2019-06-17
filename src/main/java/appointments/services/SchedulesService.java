@@ -1,19 +1,33 @@
 package appointments.services;
 
-import appointments.domain.Reservation;
 import appointments.domain.Schedule;
-import appointments.domain.Service;
-import appointments.domain.Specialist;
+import appointments.dto.ScheduleDTO;
 import appointments.exceptions.ScheduleNotFoundException;
+import appointments.exceptions.ServiceNotFoundException;
+import appointments.exceptions.SpecialistNotFoundException;
+import appointments.mappers.ScheduleMapper;
 import appointments.repos.SchedulesRepository;
+import appointments.repos.ServicesRepository;
+import appointments.repos.SpecialistsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
+import static appointments.utils.Constants.SCHEDULE_EMPTY_END_TIME_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_EMPTY_ID_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_EMPTY_INTERVAL_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_EMPTY_SERVICES_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_EMPTY_SPECIALIST_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_EMPTY_START_TIME_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_INCORRECT_DATE_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_NOT_FOUND_MESSAGE;
+import static appointments.utils.Constants.SERVICE_NOT_FOUND_MESSAGE;
+import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Класс, реализующий действия с объектами Расписание:
@@ -25,71 +39,86 @@ import java.util.List;
 @org.springframework.stereotype.Service
 public class SchedulesService {
 
-    private static final String EMPTY_ID_MESSAGE = "ID расписания не должен быть пустым";
-    private static final String SCHEDULE_NOT_FOUND_MESSAGE = "Расписание не найдено. ID: ";
-    private static final String EMPTY_SPECIALIST_MESSAGE = "Расписание должно быть привязано к специалисту";
-    private static final String INCORRECT_DATE_MESSAGE = "Для расписания должна быть указана корректная дата";
-    private static final String EMPTY_SERVICES_MESSAGE = "Для расписания должны быть указаны услуги";
-    private static final String EMPTY_START_TIME_MESSAGE = "Время начала приема не может быть пустым";
-    private static final String EMPTY_END_TIME_MESSAGE = "Время окончания приема не может быть пустым";
-    private static final String EMPTY_INTERVAL_MESSAGE = "Интервал приема не может быть пустым";
-    private static final String NULL_RESERVATIONS_MESSAGE = "Список броней должен существовать";
-
     /** Поле для хранения экземпляра репозитория */
     private SchedulesRepository schedulesRepository;
 
+    /** Поле для хранения экземпляра репозитория услуг */
+    private ServicesRepository servicesRepository;
+
+    /** Поле для хранения экземпляра репозитория специалистов */
+    private SpecialistsRepository specialistsRepository;
+
+    /** Поле для хранения экземпляра маппера расписаний в DTO */
+    private ScheduleMapper mapper;
+
     @Autowired
-    public SchedulesService(SchedulesRepository schedulesRepository) {
+    public SchedulesService(
+            SchedulesRepository schedulesRepository,
+            ServicesRepository servicesRepository,
+            SpecialistsRepository specialistsRepository,
+            ScheduleMapper mapper
+    ) {
         this.schedulesRepository = schedulesRepository;
+        this.servicesRepository = servicesRepository;
+        this.specialistsRepository = specialistsRepository;
+        this.mapper = mapper;
     }
 
-    /** Метод для добавления нового распиания */
+    /** Метод для добавления нового расписания */
     @Transactional
-    public Schedule addSchedule(
-            final Specialist specialist, final LocalDate date, final List<Service> services,
-            final LocalTime startTime, final LocalTime endTime, final Integer interval,
-            final List<Reservation> reservations, final boolean active
-    ) {
+    public ScheduleDTO addSchedule(final ScheduleDTO dto) {
 
-        if (specialist == null) {
+        if (dto.getSpecialistId() == null) {
             log.error("Parameter 'specialist' is null");
-            throw new IllegalArgumentException(EMPTY_SPECIALIST_MESSAGE);
+            throw new IllegalArgumentException(SCHEDULE_EMPTY_SPECIALIST_MESSAGE);
         }
-        if (date == null || date.isBefore(LocalDate.now())) {
-            log.error("Value of parameter 'date' is incorrect or null: {}", date);
-            throw new IllegalArgumentException(INCORRECT_DATE_MESSAGE);
+        if (dto.getDate() == null || dto.getDate().isBefore(LocalDate.now())) {
+            log.error("Value of parameter 'date' is incorrect or null: {}", dto.getDate());
+            throw new IllegalArgumentException(SCHEDULE_INCORRECT_DATE_MESSAGE);
         }
-        if (services == null) {
+        if (dto.getServiceIds() == null) {
             log.error("Parameter 'services' is null");
-            throw new IllegalArgumentException(EMPTY_SERVICES_MESSAGE);
+            throw new IllegalArgumentException(SCHEDULE_EMPTY_SERVICES_MESSAGE);
         }
-        if (startTime == null) {
+        if (dto.getStartTime() == null) {
             log.error("Parameter 'startTime' is null");
-            throw new IllegalArgumentException(EMPTY_START_TIME_MESSAGE);
+            throw new IllegalArgumentException(SCHEDULE_EMPTY_START_TIME_MESSAGE);
         }
-        if (endTime == null) {
+        if (dto.getEndTime() == null) {
             log.error("Parameter 'endTime' is null");
-            throw new IllegalArgumentException(EMPTY_END_TIME_MESSAGE);
+            throw new IllegalArgumentException(SCHEDULE_EMPTY_END_TIME_MESSAGE);
         }
-        if (interval == null) {
+        if (dto.getIntervalOfReception() == null) {
             log.error("Parameter 'interval' is null");
-            throw new IllegalArgumentException(EMPTY_INTERVAL_MESSAGE);
-        }
-        if (reservations == null) {
-            log.error("Parameter 'reservation' is null");
-            throw new IllegalArgumentException(NULL_RESERVATIONS_MESSAGE);
+            throw new IllegalArgumentException(SCHEDULE_EMPTY_INTERVAL_MESSAGE);
         }
 
-        final Schedule schedule = schedulesRepository.save(
-                new Schedule(
-                null, specialist, date, services, startTime, endTime,
-                interval, reservations, active
-                )
+        final Schedule schedule = mapper.scheduleDTOToSchedule(dto);
+
+        schedule.setId(null);
+        schedule.setSpecialist(
+                specialistsRepository
+                        .findById(dto.getSpecialistId())
+                        .orElseThrow(() -> new SpecialistNotFoundException(
+                                SPECIALIST_NOT_FOUND_MESSAGE + dto.getSpecialistId()
+                                )
+                        )
         );
+        schedule.setServices(
+                dto.getServiceIds()
+                        .stream()
+                        .map(id -> servicesRepository
+                                .findById(id)
+                                .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id)))
+                        .collect(toList())
+        );
+        schedule.setReservations(new ArrayList<>());
 
-        log.info("Added new schedule: {}", schedule);
+        final Schedule savedSchedule = schedulesRepository.save(schedule);
 
-        return schedule;
+        log.info("Added new schedule: {}", savedSchedule);
+
+        return mapper.scheduleToScheduleDto(savedSchedule);
     }
 
     /** Метод для удаления расписания по идентификатору */
@@ -97,12 +126,12 @@ public class SchedulesService {
     public void removeSchedule(final Long id) {
 
         if (id == null) {
-            log.error(EMPTY_ID_MESSAGE);
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+            log.error(SCHEDULE_EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SCHEDULE_EMPTY_ID_MESSAGE);
         }
         final Schedule schedule = schedulesRepository
                 .findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE + id));
 
         schedulesRepository.delete(schedule);
 
@@ -111,26 +140,43 @@ public class SchedulesService {
 
     /** Метод для поиска расписания по идентификатору */
     @Transactional(readOnly = true)
-    public Schedule findScheduleById(final Long id) {
+    public ScheduleDTO findScheduleById(final Long id) {
 
         log.debug("Finding schedule with id = {}", id);
 
         if (id == null) {
-            log.error(EMPTY_ID_MESSAGE);
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+            log.error(SCHEDULE_EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SCHEDULE_EMPTY_ID_MESSAGE);
         }
 
-        return schedulesRepository
-                .findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE));
+        return mapper.scheduleToScheduleDto(
+                schedulesRepository
+                        .findById(id)
+                        .orElseThrow(() -> new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE + id))
+        );
     }
 
     /** Метод для получения списка расписаний */
     @Transactional(readOnly = true)
-    public List<Schedule> getSchedules() {
+    public List<ScheduleDTO> getSchedules() {
 
         log.debug("Getting list of all schedules");
 
-        return schedulesRepository.findAll();
+        return mapper.scheduleListToScheduleDTOList(schedulesRepository.findAll());
+    }
+
+    /** Метод для получения списка только активных расписаний */
+    @Transactional(readOnly = true)
+    public List<ScheduleDTO> getActiveSchedules() {
+
+        log.debug("Getting list of active schedules");
+
+        return mapper.scheduleListToScheduleDTOList(
+                schedulesRepository
+                        .findAll()
+                        .stream()
+                        .filter(Schedule::isActive)
+                        .collect(toList())
+        );
     }
 }

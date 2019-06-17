@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author yanchenko_evgeniya
  */
 @Slf4j
-public class OrganizationNotFoundException extends RuntimeException {
+public class OrganizationNotFoundException extends EntityNotFoundException {
 
     public OrganizationNotFoundException(String message) {
 

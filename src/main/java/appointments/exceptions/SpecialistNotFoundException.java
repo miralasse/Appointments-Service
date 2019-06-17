@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author yanchenko_evgeniya
  */
 @Slf4j
-public class SpecialistNotFoundException extends RuntimeException {
+public class SpecialistNotFoundException extends EntityNotFoundException {
 
     public SpecialistNotFoundException(String message) {
 

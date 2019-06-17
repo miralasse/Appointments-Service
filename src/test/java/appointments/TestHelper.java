@@ -31,6 +31,13 @@ public class TestHelper {
 
     /** Поля с числовыми константами для создания тестовых объектов */
 
+    public final static String SPECIALIST_NAME_FIRST = "Специалист 1";
+    public final static String SPECIALIST_NAME_SECOND = "Специалист 2";
+    public final static String SPECIALIST_NAME_THIRD = "Специалист 3";
+
+    public final static String SERVICE_NAME_FIRST = "Постановка на очередь";
+    public final static String SERVICE_NAME_SECOND = "Получение путевки в ДОО";
+
     private final static int BIRTH_CERTIFICATE_FIRST = 456845;
     private final static int BIRTH_CERTIFICATE_SECOND = 321856;
     private final static int BIRTH_CERTIFICATE_THIRD = 987523;
@@ -44,22 +51,15 @@ public class TestHelper {
     private final static String ORGANIZATION_NAME_THIRD
             = "Департамент здравоохранения и социальной защиты населения Белгородской области";
 
-    private final static String SPECIALIST_NAME_FIRST = "Специалист 1";
-    private final static String SPECIALIST_NAME_SECOND = "Специалист 2";
-    private final static String SPECIALIST_NAME_THIRD = "Специалист 3";
-
-    private final static String SERVICE_NAME_FIRST = "Постановка на очередь";
-    private final static String SERVICE_NAME_SECOND = "Получение путевки в ДОО";
-
     private final static int YEAR = 2019;
     private final static int INTERVAL = 15;
     private final static int DAY_TWELVE = 12;
     private final static int DAY_FIFTEEN = 15;
 
-    private final static LocalDate JULY_TWELVE = LocalDate.of(YEAR, Month.JULY, DAY_TWELVE);
-    private final static LocalDate JULY_FIFTEEN = LocalDate.of(YEAR, Month.JULY, DAY_FIFTEEN);
-    private final static LocalDate AUGUST_TWELVE = LocalDate.of(YEAR, Month.AUGUST, DAY_TWELVE);
-    private final static LocalDate AUGUST_FIFTEEN = LocalDate.of(YEAR, Month.AUGUST, DAY_FIFTEEN);
+    public final static LocalDate JULY_TWELVE = LocalDate.of(YEAR, Month.JULY, DAY_TWELVE);
+    public final static LocalDate JULY_FIFTEEN = LocalDate.of(YEAR, Month.JULY, DAY_FIFTEEN);
+    public final static LocalDate AUGUST_TWELVE = LocalDate.of(YEAR, Month.AUGUST, DAY_TWELVE);
+    public final static LocalDate AUGUST_FIFTEEN = LocalDate.of(YEAR, Month.AUGUST, DAY_FIFTEEN);
 
     private final static LocalTime FIRST_OFFICE_HOURS_START = LocalTime.of(8, 0);
     private final static LocalTime FIRST_OFFICE_HOURS_END = LocalTime.of(13, 0);
@@ -70,15 +70,15 @@ public class TestHelper {
     private final static LocalTime THIRD_OFFICE_HOURS_START = LocalTime.of(10, 0);
     private final static LocalTime THIRD_OFFICE_HOURS_END = LocalTime.of(15, 0);
 
-    private final static LocalDateTime FIRST_RESERVATION_HOUR
+    public final static LocalDateTime FIRST_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.JULY, DAY_TWELVE, 9, 15);
-    private final static LocalDateTime SECOND_RESERVATION_HOUR
+    public final static LocalDateTime SECOND_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_TWELVE, 9, 15);
-    private final static LocalDateTime THIRD_RESERVATION_HOUR
+    public final static LocalDateTime THIRD_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_FIFTEEN, 11, 30);
-    private final static LocalDateTime FOURTH_RESERVATION_HOUR
+    public final static LocalDateTime FOURTH_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_TWELVE, 11, 45);
-    private final static LocalDateTime FIFTH_RESERVATION_HOUR
+    public final static LocalDateTime FIFTH_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_FIFTEEN, 12, 30);
 
     /** Поля для хранения репозиториев */
@@ -106,6 +106,12 @@ public class TestHelper {
         this.reservationsRepository = reservationsRepository;
     }
 
+    /** Метод для очистки и первичного наполнения всех таблиц */
+    public void refill() {
+        clearAll();
+        initAll();
+    }
+
 
     /** Метод для первичного наполнения всех таблиц */
     public void initAll() {
@@ -121,19 +127,19 @@ public class TestHelper {
     public void initChildren() {
 
         childrenRepository.save(new Child(
-                null, "SI", BIRTH_CERTIFICATE_FIRST,
+                null, "I-56", BIRTH_CERTIFICATE_FIRST,
                 "+7(910)452-85-96", "example1@mail.ru",
                 "Иванов", "Иван", "Иванович"
         ));
 
         childrenRepository.save(new Child(
-                null, "GI", BIRTH_CERTIFICATE_SECOND,
+                null, "I-57", BIRTH_CERTIFICATE_SECOND,
                 "+7(910)785-12-36", "example2@mail.ru",
                 "Кузнецова", "Елена", "Александровна"
         ));
 
         childrenRepository.save(new Child(
-                null, "DI",
+                null, "I-58",
                 BIRTH_CERTIFICATE_THIRD, "+7(920)623-85-47", "example3@mail.ru",
                 "Сергеев", "Антон", "Олегович"
         ));

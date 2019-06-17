@@ -14,6 +14,11 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import static appointments.utils.Constants.SERVICE_MAX_NAME_LENGTH;
+import static appointments.utils.Constants.SERVICE_MIN_NAME_LENGTH;
+import static appointments.utils.Constants.SERVICE_NULL_NAME_MESSAGE;
+import static appointments.utils.Constants.SERVICE_WRONG_LENGTH_MESSAGE;
+
 
 /**
  * Класс, описывающий сущность Услуга (Цель обращения).
@@ -30,9 +35,6 @@ import javax.validation.constraints.Size;
 @EqualsAndHashCode(of = "id")
 public class Service {
 
-    private static final int MIN_NAME_LENGTH = 8;
-    private static final int MAX_NAME_LENGTH = 400;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
@@ -40,15 +42,11 @@ public class Service {
 
 
     /** Поле Название услуги*/
-    @NotNull(message = "Наименование услуги(цели обращения) должно быть указано")
+    @NotNull(message = SERVICE_NULL_NAME_MESSAGE)
     @Size(
-            min = MIN_NAME_LENGTH,
-            max = MAX_NAME_LENGTH,
-            message = "Длина наименования услуги(цели обращения) должна быть от "
-                    + MIN_NAME_LENGTH
-                    + " до "
-                    + MAX_NAME_LENGTH
-                    + " символов"
+            min = SERVICE_MIN_NAME_LENGTH,
+            max = SERVICE_MAX_NAME_LENGTH,
+            message = SERVICE_WRONG_LENGTH_MESSAGE
     )
     @Column
     private String name;

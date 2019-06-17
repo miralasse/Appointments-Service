@@ -2,7 +2,11 @@ package appointments.services;
 
 import appointments.domain.Organization;
 import appointments.domain.Specialist;
+import appointments.dto.SpecialistDTO;
+import appointments.exceptions.OrganizationNotFoundException;
 import appointments.exceptions.SpecialistNotFoundException;
+import appointments.mappers.SpecialistMapper;
+import appointments.repos.OrganizationsRepository;
 import appointments.repos.SpecialistsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +15,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static appointments.utils.Constants.ORGANIZATION_NOT_FOUND_MESSAGE;
+import static appointments.utils.Constants.SPECIALIST_EMPTY_ID_MESSAGE;
+import static appointments.utils.Constants.SPECIALIST_EMPTY_NAME_MESSAGE;
+import static appointments.utils.Constants.SPECIALIST_EMPTY_ORGANIZATION_MESSAGE;
+import static appointments.utils.Constants.SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE;
+import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.toList;
+
 
 /**
  * Класс, реализующий действия с объектами справочника Специалисты:
@@ -23,101 +35,123 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 @Service
 public class SpecialistsService {
 
-    private static final String EMPTY_ID_MESSAGE = "ID специалиста не должен быть пустым";
-    private static final String SPECIALIST_NOT_FOUND_MESSAGE = "Специалист не найден. ID: ";
-    private static final String EMPTY_NAME_MESSAGE = "Имя/должность специалиста должно быть заполнено";
-    private static final String EMPTY_ROOM_NUMBER_MESSAGE = "Номер кабинета не должен быть пустым";
-    private static final String EMPTY_ORGANIZATION_MESSAGE
-            = "Должна быть указана организация, к которой относится специалист";
-
     /** Поле для хранения экземпляра репозитория */
     private SpecialistsRepository specialistsRepository;
 
+    /** Поле для хранения экземпляра репозитория организаций */
+    private OrganizationsRepository organizationsRepository;
+
+    /** Поле для хранения экземпляра маппера специалистов в DTO */
+    private SpecialistMapper mapper;
+
     @Autowired
-    public SpecialistsService(SpecialistsRepository specialistsRepository) {
+    public SpecialistsService(
+            SpecialistsRepository specialistsRepository,
+            OrganizationsRepository organizationsRepository,
+            SpecialistMapper mapper
+    ) {
         this.specialistsRepository = specialistsRepository;
+        this.organizationsRepository = organizationsRepository;
+        this.mapper = mapper;
     }
+
 
     /** Метод для добавления нового специалиста в справочник */
     @Transactional
-    public Specialist addSpecialist(
-            final String name, final String roomNumber, final boolean active, final Organization organization
-    ) {
+    public SpecialistDTO addSpecialist(final SpecialistDTO dto) {
 
-        if (isNullOrEmpty(name)) {
+        if (isNullOrEmpty(dto.getName())) {
             log.error("Parameter 'name' is null");
-            throw new IllegalArgumentException(EMPTY_NAME_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_NAME_MESSAGE);
         }
-        if (isNullOrEmpty(roomNumber)) {
+        if (isNullOrEmpty(dto.getRoomNumber())) {
             log.error("Parameter 'roomNumber' is null");
-            throw new IllegalArgumentException(EMPTY_ROOM_NUMBER_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE);
         }
-        if (organization == null) {
+        if (dto.getOrganizationId() == null) {
             log.error("Parameter 'organization' is null");
-            throw new IllegalArgumentException(EMPTY_ORGANIZATION_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_ORGANIZATION_MESSAGE);
         }
 
-        final Specialist specialist = specialistsRepository.save(
-                new Specialist(null, name, roomNumber, active, organization)
+        final Specialist specialist = mapper.specialistDTOToSpecialist(dto);
+
+        specialist.setId(null);
+
+        specialist.setOrganization(
+                organizationsRepository
+                        .findById(specialist.getOrganization().getId())
+                        .orElseThrow(() -> new OrganizationNotFoundException(
+                                        ORGANIZATION_NOT_FOUND_MESSAGE + dto.getOrganizationId()
+                                )
+                        )
         );
 
-        log.info("Added new specialist: {}", specialist);
+        final Specialist savedSpecialist = specialistsRepository.save(specialist);
+        log.info("Added new specialist: {}", savedSpecialist);
 
-        return specialist;
+        return mapper.specialistToSpecialistDto(savedSpecialist);
     }
 
     /** Метод для поиска специалиста по идентификатору */
     @Transactional(readOnly = true)
-    public Specialist findSpecialistById(final Integer id) {
+    public SpecialistDTO findSpecialistById(final Integer id) {
 
         log.debug("Finding specialist with id = {}", id);
 
         if (id == null) {
-            log.error(EMPTY_ID_MESSAGE);
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+            log.error(SPECIALIST_EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_ID_MESSAGE);
         }
 
-        return specialistsRepository
-                .findById(id)
-                .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE));
+        return mapper.specialistToSpecialistDto(
+                specialistsRepository
+                        .findById(id)
+                        .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE + id))
+        );
     }
 
     /** Метод для редактирования специалиста в справочнике */
     @Transactional
-    public void editSpecialist(
-            final Integer id, final String name, final String roomNumber,
-            final boolean active, final Organization organization
-    ) {
+    public void editSpecialist(final SpecialistDTO dto) {
 
-        if (id == null) {
-            log.error(EMPTY_ID_MESSAGE);
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+        if (dto.getId() == null) {
+            log.error(SPECIALIST_EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_ID_MESSAGE);
         }
-        if (isNullOrEmpty(name)) {
+        if (isNullOrEmpty(dto.getName())) {
             log.error("Trying to set 'name' to null");
-            throw new IllegalArgumentException(EMPTY_NAME_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_NAME_MESSAGE);
         }
-        if (isNullOrEmpty(roomNumber)) {
+        if (isNullOrEmpty(dto.getRoomNumber())) {
             log.error("Trying to set 'roomNumber' to null");
-            throw new IllegalArgumentException(EMPTY_ROOM_NUMBER_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE);
         }
-        if (organization == null) {
+        if (dto.getOrganizationId() == null) {
             log.error("Trying to set 'organization' to null");
-            throw new IllegalArgumentException(EMPTY_ORGANIZATION_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_ORGANIZATION_MESSAGE);
         }
 
-        final Specialist specialist = specialistsRepository
-                .findById(id)
-                .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE));
+        final Specialist specialist = mapper.specialistDTOToSpecialist(dto);
 
-        specialist.setName(name);
-        specialist.setRoomNumber(roomNumber);
-        specialist.setActive(active);
-        specialist.setOrganization(organization);
+        Organization organization = organizationsRepository
+                .findById(specialist.getOrganization().getId())
+                .orElseThrow(() -> new OrganizationNotFoundException(
+                                ORGANIZATION_NOT_FOUND_MESSAGE + dto.getOrganizationId()
+                        )
+                );
 
-        specialistsRepository.save(specialist);
+        final Specialist foundSpecialist = specialistsRepository
+                .findById(specialist.getId())
+                .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE + specialist.getId()));
 
-        log.info("Specialist with id = {} edited: {}", id, specialist);
+        foundSpecialist.setName(specialist.getName());
+        foundSpecialist.setRoomNumber(specialist.getRoomNumber());
+        foundSpecialist.setActive(specialist.isActive());
+        foundSpecialist.setOrganization(organization);
+
+        specialistsRepository.save(foundSpecialist);
+
+        log.info("Specialist with id = {} edited: {}", specialist.getId(), foundSpecialist);
     }
 
     /** Метод для удаления специалиста по идентификатору */
@@ -125,58 +159,58 @@ public class SpecialistsService {
     public void removeSpecialist(final Integer id) {
 
         if (id == null) {
-            log.error(EMPTY_ID_MESSAGE);
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+            log.error(SPECIALIST_EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_ID_MESSAGE);
         }
         final Specialist specialist = specialistsRepository
                 .findById(id)
-                .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE + id));
 
         specialistsRepository.delete(specialist);
 
         log.info("Specialist with id = {} deleted", id);
     }
 
-    /** Метод для активации специалиста в списке */
-    public void activateSpecialist(final Integer id) {
-
-        changeActiveState(id, true);
-
-        log.info("Specialist with id = {} activated", id);
-    }
-
-    /** Метод для деактивации специалиста в списке*/
-    public void deactivateSpecialist(final Integer id) {
-
-        changeActiveState(id, false);
-
-        log.info("Specialist with id = {} deactivated", id);
-    }
-
-    /** Служебный метод для смены флага активности специалиста */
+    /** Метод, осуществляющий смену статуса активности специалиста */
     @Transactional
-    private void changeActiveState(final Integer id, final boolean makeActive) {
+    public void changeActiveState(final Integer id, final boolean makeActive) {
 
         if (id == null) {
-            log.error(EMPTY_ID_MESSAGE);
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+            log.error(SPECIALIST_EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SPECIALIST_EMPTY_ID_MESSAGE);
         }
         final Specialist specialist = specialistsRepository
                 .findById(id)
-                .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE + id));
 
         specialist.setActive(makeActive);
+
+        log.info("Specialist with id = {} {}", id, makeActive ? "activated" : "deactivated");
+
         specialistsRepository.save(specialist);
     }
 
     /** Метод для получения списка специалистов */
     @Transactional(readOnly = true)
-    public List<Specialist> getSpecialists() {
+    public List<SpecialistDTO> getSpecialists() {
 
         log.debug("Getting list of all specialists");
 
-        return specialistsRepository.findAll();
+        return mapper.specialistListToSpecialistDTOList(specialistsRepository.findAll());
     }
 
+    /** Метод для получения списка только активных специалистов */
+    @Transactional(readOnly = true)
+    public List<SpecialistDTO> getActiveSpecialists() {
 
+        log.debug("Getting list of active specialists");
+
+        return mapper.specialistListToSpecialistDTOList(
+                specialistsRepository
+                        .findAll()
+                        .stream()
+                        .filter(Specialist::isActive)
+                        .collect(toList())
+        );
+    }
 }
