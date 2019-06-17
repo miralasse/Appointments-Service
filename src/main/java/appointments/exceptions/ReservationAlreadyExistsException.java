@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author yanchenko_evgeniya
  */
 @Slf4j
-public class ReservationAlreadyExistsException extends RuntimeException {
+public class ReservationAlreadyExistsException extends EntityNotFoundException {
 
     public ReservationAlreadyExistsException(String message) {
 

@@ -9,7 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static appointments.utils.Constants.SERVICE_EMPTY_ID_MESSAGE;
+import static appointments.utils.Constants.SERVICE_NOT_FOUND_MESSAGE;
+import static appointments.utils.Constants.SERVICE_NULL_NAME_MESSAGE;
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.toList;
+
 
 /**
  * Класс, реализующий действия с объектами справочника Цели обращения(Услуги):
@@ -20,9 +25,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 @Slf4j
 @org.springframework.stereotype.Service
 public class ServicesService {
-
-    private static final String EMPTY_ID_MESSAGE = "ID услуги не должен быть пустым";
-    private static final String SERVICE_NOT_FOUND_MESSAGE = "Услуга не найдена. ID: ";
 
     /** Поле для хранения экземпляра репозитория */
     private ServicesRepository servicesRepository;
@@ -38,7 +40,7 @@ public class ServicesService {
 
         if (isNullOrEmpty(name)) {
             log.error("Parameter 'name' is null");
-            throw new IllegalArgumentException("Название услуги не должно быть пустым");
+            throw new IllegalArgumentException(SERVICE_NULL_NAME_MESSAGE);
         }
 
         final Service service = servicesRepository.save(new Service(null, name, active));
@@ -53,8 +55,8 @@ public class ServicesService {
     public void removeService(final Integer id) {
 
         if (id == null) {
-            log.error(EMPTY_ID_MESSAGE);
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+            log.error(SERVICE_EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SERVICE_EMPTY_ID_MESSAGE);
         }
         final Service service = servicesRepository
                 .findById(id)
@@ -72,44 +74,31 @@ public class ServicesService {
         log.debug("Finding service with id = {}", id);
 
         if (id == null) {
-            log.error(EMPTY_ID_MESSAGE);
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+            log.error(SERVICE_EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SERVICE_EMPTY_ID_MESSAGE);
         }
 
         return servicesRepository
                 .findById(id)
-                .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id));
     }
 
-    /** Метод для активации цели обращения (услуги) */
-    public void activateService(final Integer id) {
-
-        changeActiveState(id, true);
-
-        log.info("Service with id = {} activated", id);
-    }
-
-    /** Метод для деактивации цели обращения (услуги) */
-    public void deactivateService(final Integer id) {
-
-        changeActiveState(id, false);
-
-        log.info("Service with id = {} deactivated", id);
-    }
-
-    /** Служебный метод для смены флага активности цели обращения (услуги) */
+    /** Метод для активации/деактивации цели обращения (услуги) */
     @Transactional
-    private void changeActiveState(final Integer id, final boolean makeActive) {
+    public void changeActiveState(final Integer id, final boolean makeActive) {
 
         if (id == null) {
             log.error("Parameter 'id' is null");
-            throw new IllegalArgumentException(EMPTY_ID_MESSAGE);
+            throw new IllegalArgumentException(SERVICE_EMPTY_ID_MESSAGE);
         }
         final Service service = servicesRepository
                 .findById(id)
                 .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id));
 
         service.setActive(makeActive);
+
+        log.info("Service with id = {} {}", id, makeActive ? "activated" : "deactivated");
+
         servicesRepository.save(service);
     }
 
@@ -123,4 +112,16 @@ public class ServicesService {
     }
 
 
+    /** Метод для получения списка только активных целей обращения (услуг) */
+    @Transactional(readOnly = true)
+    public List<Service> getActiveServices() {
+
+        log.debug("Getting list of active services");
+
+        return servicesRepository
+                .findAll()
+                .stream()
+                .filter(Service::isActive)
+                .collect(toList());
+    }
 }

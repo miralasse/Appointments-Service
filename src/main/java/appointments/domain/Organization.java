@@ -14,6 +14,15 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import static appointments.utils.Constants.ORGANIZATION_MAX_STRING_LENGTH;
+import static appointments.utils.Constants.ORGANIZATION_MIN_STRING_LENGTH;
+import static appointments.utils.Constants.ORGANIZATION_NULL_ADDRESS_MESSAGE;
+import static appointments.utils.Constants.ORGANIZATION_NULL_DESCRIPTION_MESSAGE;
+import static appointments.utils.Constants.ORGANIZATION_NULL_NAME_MESSAGE;
+import static appointments.utils.Constants.ORGANIZATION_WRONG_ADDRESS_MESSAGE;
+import static appointments.utils.Constants.ORGANIZATION_WRONG_DESCRIPTION_MESSAGE;
+import static appointments.utils.Constants.ORGANIZATION_WRONG_NAME_MESSAGE;
+
 
 /**
  * Класс, описывающий сущность Организация.
@@ -21,6 +30,7 @@ import javax.validation.constraints.Size;
  *
  * @author yanchenko_evgeniya
  */
+
 @Entity
 @Table(name = "organizations")
 @Data
@@ -29,9 +39,6 @@ import javax.validation.constraints.Size;
 @EqualsAndHashCode(of = "id")
 public class Organization {
 
-    private static final int MIN_STRING_LENGTH = 12;
-    private static final int MAX_STRING_LENGTH = 400;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
@@ -39,45 +46,33 @@ public class Organization {
 
 
     /** Поле Название */
-    @NotNull(message = "Наименование организации должно быть указано")
+    @NotNull(message = ORGANIZATION_NULL_NAME_MESSAGE)
     @Size(
-            min = MIN_STRING_LENGTH,
-            max = MAX_STRING_LENGTH,
-            message = "Длина наименования организации должна быть от "
-                    + MIN_STRING_LENGTH
-                    + " до "
-                    + MAX_STRING_LENGTH
-                    + " символов"
+            min = ORGANIZATION_MIN_STRING_LENGTH,
+            max = ORGANIZATION_MAX_STRING_LENGTH,
+            message = ORGANIZATION_WRONG_NAME_MESSAGE
     )
     @Column
     private String name;
 
 
     /** Поле Фактический адрес */
-    @NotNull(message = "Фактический адрес организации должен быть указан")
+    @NotNull(message = ORGANIZATION_NULL_ADDRESS_MESSAGE)
     @Size(
-            min = MIN_STRING_LENGTH,
-            max = MAX_STRING_LENGTH,
-            message = "Длина адреса организации должна быть от "
-                    + MIN_STRING_LENGTH
-                    + " до "
-                    + MAX_STRING_LENGTH
-                    + " символов"
+            min = ORGANIZATION_MIN_STRING_LENGTH,
+            max = ORGANIZATION_MAX_STRING_LENGTH,
+            message = ORGANIZATION_WRONG_ADDRESS_MESSAGE
     )
     @Column(name = "actual_address")
     private String actualAddress;
 
 
     /** Поле Описание для внесения контактной и другой полезной информации */
-    @NotNull(message = "Контактная информация организации должна быть указана")
+    @NotNull(message = ORGANIZATION_NULL_DESCRIPTION_MESSAGE)
     @Size(
-            min = MIN_STRING_LENGTH,
-            max = MAX_STRING_LENGTH,
-            message = "Длина контактной информации должна быть от "
-                    + MIN_STRING_LENGTH
-                    + " до "
-                    + MAX_STRING_LENGTH
-                    + " символов"
+            min = ORGANIZATION_MIN_STRING_LENGTH,
+            max = ORGANIZATION_MAX_STRING_LENGTH,
+            message = ORGANIZATION_WRONG_DESCRIPTION_MESSAGE
     )
     @Column
     private String description;

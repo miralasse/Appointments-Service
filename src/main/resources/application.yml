@@ -1,3 +1,6 @@
+server:
+  port: 8189
+
 spring:
   datasource:
     platform: postgres
@@ -11,5 +14,4 @@ spring:
     show-sql: true
     properties:
       hibernate.id.new_generator_mappings: false
-      hibernate.connection.provider_disables_autocommit: true
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect

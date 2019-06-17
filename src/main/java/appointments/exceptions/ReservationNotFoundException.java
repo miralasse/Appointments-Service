@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author yanchenko_evgeniya
  */
 @Slf4j
-public class ReservationNotFoundException extends RuntimeException {
+public class ReservationNotFoundException extends EntityNotFoundException {
 
     public ReservationNotFoundException(String message) {
 

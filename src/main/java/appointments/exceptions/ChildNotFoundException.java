@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author yanchenko_evgeniya
  */
 @Slf4j
-public class ChildNotFoundException extends RuntimeException {
+public class ChildNotFoundException extends EntityNotFoundException {
 
     public ChildNotFoundException(String message) {
 

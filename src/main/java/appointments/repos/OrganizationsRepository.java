@@ -16,4 +16,5 @@ import java.util.Optional;
 public interface OrganizationsRepository extends JpaRepository<Organization, Integer> {
 
     Optional<Organization> findOneByName(String name);
+
 }

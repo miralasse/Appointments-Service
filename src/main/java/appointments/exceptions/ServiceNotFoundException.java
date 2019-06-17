@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author yanchenko_evgeniya
  */
 @Slf4j
-public class ServiceNotFoundException extends RuntimeException {
+public class ServiceNotFoundException extends EntityNotFoundException {
 
     public ServiceNotFoundException(String message) {
 

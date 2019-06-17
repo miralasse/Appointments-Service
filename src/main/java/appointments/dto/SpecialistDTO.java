@@ -1,18 +1,9 @@
-package appointments.domain;
+package appointments.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -28,23 +19,14 @@ import static appointments.utils.Constants.SPECIALIST_WRONG_ROOM_NUMBER_LENGTH;
 
 
 /**
- * Класс, описывающий сущность Специалист (сотрудник, ведущий прием).
- * Содержит имя (ФИО/должность), номер кабинета,
- * флаг активности и ссылку на организацию, к которой относится специалист.
- *
  * @author yanchenko_evgeniya
  */
-@Entity
-@Table(name = "specialists")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id")
-public class Specialist {
+public class SpecialistDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column
+    /** Поле для индентификатора специалиста: null для нового, not null для существующего */
     private Integer id;
 
 
@@ -55,7 +37,6 @@ public class Specialist {
             max = SPECIALIST_MAX_NAME_LENGTH,
             message = SPECIALIST_WRONG_NAME_LENGTH
     )
-    @Column
     private String name;
 
 
@@ -66,19 +47,15 @@ public class Specialist {
             max = SPECIALIST_MAX_ROOM_NUMBER_LENGTH,
             message = SPECIALIST_WRONG_ROOM_NUMBER_LENGTH
     )
-    @Column(name = "room_number")
     private String roomNumber;
 
 
     /** Поле Флаг активности специалиста */
-    @Column
     private boolean active;
 
 
-    /** Поле Ссылка на организацию (объект Organization), к которой относится специалист */
+    /** Поле индентификатора организации к которой относится специалист */
     @NotNull(message = SPECIALIST_EMPTY_ORGANIZATION_MESSAGE)
-    @ManyToOne
-    @JoinColumn(name = "organization_id")
-    private Organization organization;
+    private Integer organizationId;
 
 }

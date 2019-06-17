@@ -1,10 +1,11 @@
 package appointments.services;
 
+import appointments.TestHelper;
 import appointments.domain.Organization;
 import appointments.domain.Specialist;
+import appointments.dto.SpecialistDTO;
 import appointments.exceptions.SpecialistNotFoundException;
 import appointments.repos.OrganizationsRepository;
-import appointments.TestHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,17 +40,11 @@ public class SpecialistsServiceTest {
     @Autowired
     private SpecialistsService specialistsService;
 
-    @Autowired
-    public void setTestHelper(TestHelper testHelper) {
-        this.testHelper = testHelper;
-    }
 
     @Before
     public void setUp() {
 
-        testHelper.clearAll();
-        testHelper.initOrganizations();
-        testHelper.initSpecialists();
+        testHelper.refill();
         organization = organizationsRepository.findOneByName(ORGANIZATION_NAME).orElse(null);
     }
 
@@ -60,45 +55,57 @@ public class SpecialistsServiceTest {
         final int expectedSize = specialistsService.getSpecialists().size() + 1;
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
 
         final int actualSize = specialistsService.getSpecialists().size();
-        final Specialist testSpecialist
-                = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization);
+        final SpecialistDTO testSpecialistDTO
+                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
 
-        assertThat(specialistsService.getSpecialists()).contains(testSpecialist);
+        assertThat(specialistsService.getSpecialists()).contains(testSpecialistDTO);
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddSpecialistWithNullName() {
-        specialistsService.addSpecialist(null, ROOM_NUMBER, true, organization);
+        specialistsService.addSpecialist(
+                new SpecialistDTO(null, null, ROOM_NUMBER, true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddSpecialistWithEmptyName() {
-        specialistsService.addSpecialist("", ROOM_NUMBER, true, organization);
+        specialistsService.addSpecialist(
+                new SpecialistDTO(null, "", ROOM_NUMBER, true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddSpecialistWithNullRoomNumber() {
-        specialistsService.addSpecialist(TEST_SPECIALIST_NAME, null, true, organization);
+        specialistsService.addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, null, true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddSpecialistWithEmptyRoomNumber() {
-        specialistsService.addSpecialist(TEST_SPECIALIST_NAME, "", true, organization);
+        specialistsService.addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, "", true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddSpecialistWithNullOrganization() {
-        specialistsService.addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, null);
+
+        specialistsService.addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, null, true, null)
+        );
     }
 
     @Test
@@ -106,17 +113,20 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistName() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
 
         final String changedName = "Петрова Екатерина Васильевна";
 
-        specialistsService.editSpecialist(id, changedName, ROOM_NUMBER, true, organization);
+        specialistsService.editSpecialist(
+                new SpecialistDTO(id, changedName, ROOM_NUMBER, true, organization.getId())
+        );
 
-        final Specialist actualSpecialist = specialistsService.findSpecialistById(id);
+        final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
         final Specialist testSpecialist = new Specialist(id, changedName, ROOM_NUMBER, true, organization);
 
-        assertThat(actualSpecialist.getName()).isEqualTo(testSpecialist.getName());
+        assertThat(actualSpecialistDTO.getName()).isEqualTo(testSpecialist.getName());
     }
 
     @Test
@@ -124,18 +134,20 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistRoomNumber() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
 
         final String changedRoomNumber = "18";
 
-        specialistsService.editSpecialist(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization);
-
-        final Specialist actualSpecialist = specialistsService.findSpecialistById(id);
+        specialistsService.editSpecialist(
+                new SpecialistDTO(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization.getId())
+        );
+        final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
         final Specialist testSpecialist
                 = new Specialist(id, TEST_SPECIALIST_NAME, changedRoomNumber,  true, organization);
 
-        assertThat(actualSpecialist.getRoomNumber()).isEqualTo(testSpecialist.getRoomNumber());
+        assertThat(actualSpecialistDTO.getRoomNumber()).isEqualTo(testSpecialist.getRoomNumber());
     }
 
     @Test
@@ -143,15 +155,17 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistActive() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
 
-        specialistsService.editSpecialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization);
+        specialistsService.editSpecialist(
+                new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId())
+        );
 
-        final Specialist actualSpecialist = specialistsService.findSpecialistById(id);
-        final Specialist testSpecialist = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization);
+        final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
 
-        assertThat(actualSpecialist.isActive()).isEqualTo(testSpecialist.isActive());
+        assertThat(actualSpecialistDTO.isActive()).isFalse();
     }
 
     @Test
@@ -159,31 +173,38 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistOrganization() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
 
         final Organization changedOrganization
                 = organizationsRepository.findOneByName("Управление образования г. Старый Оскол").orElse(null);
 
-        specialistsService.editSpecialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, changedOrganization);
+        specialistsService.editSpecialist(
+                new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, changedOrganization.getId())
+        );
 
-        final Specialist actualSpecialist = specialistsService.findSpecialistById(id);
+        final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
         final Specialist testSpecialist
                 = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, changedOrganization);
 
-        assertThat(actualSpecialist.getOrganization()).isEqualTo(testSpecialist.getOrganization());
+        assertThat(actualSpecialistDTO.getOrganizationId()).isEqualTo(testSpecialist.getOrganization().getId());
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testEditSpecialistWithNullId() {
-        specialistsService.editSpecialist(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization);
+        specialistsService.editSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+        );
     }
 
     @Test(expected = SpecialistNotFoundException.class)
     @Transactional
     public void testEditSpecialistWithWrongId() {
-        specialistsService.editSpecialist(Integer.MIN_VALUE, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization);
+        specialistsService.editSpecialist(
+                new SpecialistDTO(Integer.MIN_VALUE, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -191,9 +212,13 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistWithNullName() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
-        specialistsService.editSpecialist(id, null, ROOM_NUMBER, true, organization);
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
+
+        specialistsService.editSpecialist(
+                new SpecialistDTO(id, null, ROOM_NUMBER, true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -201,9 +226,13 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistWithEmptyName() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
-        specialistsService.editSpecialist(id, "", ROOM_NUMBER, true, organization);
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
+
+        specialistsService.editSpecialist(
+                new SpecialistDTO(id, "", ROOM_NUMBER, true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -211,9 +240,13 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistWithNullRoomNumber() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
-        specialistsService.editSpecialist(id, TEST_SPECIALIST_NAME, null, true, organization);
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
+
+        specialistsService.editSpecialist(
+                new SpecialistDTO(id, TEST_SPECIALIST_NAME, null, true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -221,9 +254,13 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistWithEmptyRoomNumber() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
-        specialistsService.editSpecialist(id, TEST_SPECIALIST_NAME, "", true, organization);
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
+
+        specialistsService.editSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, "", true, organization.getId())
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -231,9 +268,14 @@ public class SpecialistsServiceTest {
     public void testEditSpecialistWithNullOrganization() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
-        specialistsService.editSpecialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, null);
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
+
+        specialistsService.editSpecialist(
+                new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, null)
+        );
+
     }
 
     @Test
@@ -241,16 +283,19 @@ public class SpecialistsServiceTest {
     public void testRemoveSpecialist() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
+
         final int expectedSize = specialistsService.getSpecialists().size() - 1;
 
         specialistsService.removeSpecialist(id);
 
         final int actualSize = specialistsService.getSpecialists().size();
-        final Specialist testSpecialist = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization);
+        final SpecialistDTO testSpecialistDTO
+                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
 
-        assertThat(specialistsService.getSpecialists()).doesNotContain(testSpecialist);
+        assertThat(specialistsService.getSpecialists()).doesNotContain(testSpecialistDTO);
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
@@ -271,13 +316,15 @@ public class SpecialistsServiceTest {
     public void testFindSpecialistById() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
 
-        final Specialist expectedSpecialist = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization);
-        final Specialist actualSpecialist = specialistsService.findSpecialistById(id);
+        final SpecialistDTO expectedSpecialistDTO
+                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
+        final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
 
-        assertThat(expectedSpecialist).isEqualTo(actualSpecialist);
+        assertThat(expectedSpecialistDTO).isEqualTo(actualSpecialistDTO);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -297,26 +344,27 @@ public class SpecialistsServiceTest {
     public void testActivateSpecialist() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId())
+                ).getId();
 
-        specialistsService.activateSpecialist(id);
+        specialistsService.changeActiveState(id, true);
 
-        final Specialist specialist = specialistsService.findSpecialistById(id);
+        final SpecialistDTO specialistDTO = specialistsService.findSpecialistById(id);
 
-        assertThat(specialist.isActive()).isTrue();
+        assertThat(specialistDTO.isActive()).isTrue();
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testActivateServiceWithNullId() {
-        specialistsService.activateSpecialist(null);
+        specialistsService.changeActiveState(null, true);
     }
 
     @Test(expected = SpecialistNotFoundException.class)
     @Transactional
     public void testActivateServiceWrongId() {
-        specialistsService.activateSpecialist(Integer.MIN_VALUE);
+        specialistsService.changeActiveState(Integer.MIN_VALUE, true);
     }
 
     @Test
@@ -324,31 +372,28 @@ public class SpecialistsServiceTest {
     public void testDeactivateSpecialist() {
 
         final int id = specialistsService
-                .addSpecialist(TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization)
-                .getId();
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                ).getId();
 
-        specialistsService.deactivateSpecialist(id);
+        specialistsService.changeActiveState(id, false);
 
-        final Specialist specialist = specialistsService.findSpecialistById(id);
+        final SpecialistDTO specialistDTO = specialistsService.findSpecialistById(id);
 
-        assertThat(specialist.isActive()).isFalse();
+        assertThat(specialistDTO.isActive()).isFalse();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testDeactivateSpecialistWithNullId() {
-        specialistsService.deactivateSpecialist(null);
-    }
-
-    @Test(expected = SpecialistNotFoundException.class)
-    @Transactional
-    public void testDeactivateSpecialistWrongId() {
-        specialistsService.deactivateSpecialist(Integer.MIN_VALUE);
-    }
 
     @Test
     @Transactional
     public void getSpecialists() {
-        assertThat(specialistsService.getSpecialists()).isNotNull();
+        assertThat(specialistsService.getSpecialists()).isNotNull().isNotEmpty();
+    }
+
+    @Test
+    @Transactional
+    public void getActiveSpecialists() {
+
+       assertThat(specialistsService.getActiveSpecialists()).allSatisfy(SpecialistDTO::isActive);
     }
 }

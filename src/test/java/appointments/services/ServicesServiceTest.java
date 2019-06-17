@@ -1,8 +1,8 @@
 package appointments.services;
 
+import appointments.TestHelper;
 import appointments.domain.Service;
 import appointments.exceptions.ServiceNotFoundException;
-import appointments.TestHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 /**
  * @author yanchenko_evgeniya
  */
@@ -22,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class ServicesServiceTest {
+
 
     private static final String TEST_SERVICE_NAME = "Оформление льготного питания";
 
@@ -34,8 +34,7 @@ public class ServicesServiceTest {
     @Before
     public void setUp() {
 
-        testHelper.clearAll();
-        testHelper.initServices();
+        testHelper.refill();
     }
 
     @Test
@@ -127,7 +126,7 @@ public class ServicesServiceTest {
                 .addService(TEST_SERVICE_NAME, false)
                 .getId();
 
-        servicesService.activateService(id);
+        servicesService.changeActiveState(id, true);
 
         final Service testService = servicesService.findServiceById(id);
 
@@ -136,14 +135,14 @@ public class ServicesServiceTest {
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
-    public void testActivateServiceWithNullId() {
-        servicesService.activateService(null);
+    public void testChangeActivateStateWithNullId() {
+        servicesService.changeActiveState(null, true);
     }
 
     @Test(expected = ServiceNotFoundException.class)
     @Transactional
     public void testActivateServiceWrongId() {
-        servicesService.activateService(Integer.MIN_VALUE);
+        servicesService.changeActiveState(Integer.MIN_VALUE, true);
     }
 
     @Test
@@ -155,28 +154,23 @@ public class ServicesServiceTest {
                 .addService(TEST_SERVICE_NAME, true)
                 .getId();
 
-        servicesService.deactivateService(id);
+        servicesService.changeActiveState(id, false);
 
         final Service testService = servicesService.findServiceById(id);
 
         assertThat(testService.isActive()).isFalse();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @Transactional
-    public void testDeactivateServiceWithNullId() {
-        servicesService.deactivateService(null);
-    }
-
-    @Test(expected = ServiceNotFoundException.class)
-    @Transactional
-    public void testDeactivateServiceWrongId() {
-        servicesService.deactivateService(Integer.MIN_VALUE);
+    public void getServices() {
+        assertThat(servicesService.getServices()).isNotNull().isNotEmpty();
     }
 
     @Test
     @Transactional
-    public void getServices() {
-        assertThat(servicesService.getServices()).isNotNull();
+    public void getActiveServices() {
+
+        assertThat(servicesService.getActiveServices()).allSatisfy(Service::isActive);
     }
 }

@@ -2,10 +2,10 @@ package appointments.services;
 
 import appointments.TestHelper;
 import appointments.domain.Child;
-import appointments.domain.Reservation;
 import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.domain.Specialist;
+import appointments.dto.ReservationDTO;
 import appointments.exceptions.ReservationAlreadyExistsException;
 import appointments.exceptions.ReservationNotFoundException;
 import appointments.repos.ChildrenRepository;
@@ -71,20 +71,18 @@ public class ReservationsServiceTest {
     @Before
     public void setUp() {
 
-        testHelper.clearAll();
-        testHelper.initAll();
+        testHelper.refill();
         service = servicesRepository.findOneByName(SERVICE_NAME).orElse(null);
         child = childrenRepository.findOneByBirthCertificateNumber(BIRTH_CERTIFICATE).orElse(null);
         final Specialist specialist = specialistsRepository.findOneByName(SPECIALIST_NAME).orElse(null);
         schedule = schedulesRepository.findOneBySpecialistAndDate(specialist, DATE).orElse(null);
-        System.out.println(schedule.getReservations());
     }
 
     @Test
     @Transactional
     public void testFindReservationByDate() {
         final int expectedListSize = 2;
-        final List<Reservation> reservationsByDate = reservationsService.findReservationByDate(DATE);
+        final List<ReservationDTO> reservationsByDate = reservationsService.findReservationByDate(DATE);
 
         assertThat(reservationsByDate).hasSize(expectedListSize);
     }
@@ -102,7 +100,7 @@ public class ReservationsServiceTest {
         final int daysToAdd = 5;
         final int expectedListSize = 4;
 
-        final List<Reservation> reservationsByPeriod
+        final List<ReservationDTO> reservationsByPeriod
                 = reservationsService.findReservationByPeriod(DATE, LocalDate.of(YEAR, MONTH, DAY + daysToAdd));
 
         assertThat(reservationsByPeriod).hasSize(expectedListSize);
@@ -131,13 +129,29 @@ public class ReservationsServiceTest {
     public void testFindReservationById() {
 
         final long id = reservationsService
-                .addReservation(DATE_TIME, schedule, service, true, child)
-                .getId();
-        final Reservation expectedReservation = new Reservation(id, DATE_TIME, schedule, service, true, child);
+                .addReservation(
+                        new ReservationDTO(
+                                null,
+                                DATE_TIME,
+                                schedule.getId(),
+                                service.getId(),
+                                true,
+                                child.getId()
+                        )
+                ).getId();
 
-        final Reservation actualReservation = reservationsService.findReservationById(id);
+        final ReservationDTO expectedReservationDTO = new ReservationDTO(
+                id,
+                DATE_TIME,
+                schedule.getId(),
+                service.getId(),
+                true,
+                child.getId()
+        );
 
-        assertThat(expectedReservation).isEqualTo(actualReservation);
+        final ReservationDTO actualReservationDTO = reservationsService.findReservationById(id);
+
+        assertThat(expectedReservationDTO).isEqualTo(actualReservationDTO);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -156,42 +170,95 @@ public class ReservationsServiceTest {
     @Transactional
     public void testAddReservation() {
 
-        final int expectedSize = reservationsService.getReservations().size() + 1;
+        final int expectedSize = reservationsService.getReservations(null, null, null).size() + 1;
 
         final long id = reservationsService
-                .addReservation(DATE_TIME, schedule, service, true, child)
-                .getId();
+                .addReservation(
+                        new ReservationDTO(
+                                null,
+                                DATE_TIME,
+                                schedule.getId(),
+                                service.getId(),
+                                true,
+                                child.getId()
+                        )
+                ).getId();
 
-        final int actualSize = reservationsService.getReservations().size();
-        final Reservation testReservation = new Reservation(id, DATE_TIME, schedule, service, true, child);
+        final int actualSize = reservationsService.getReservations(null, null, null).size();
+        final ReservationDTO testReservationDTO = new ReservationDTO(
+                id,
+                DATE_TIME,
+                schedule.getId(),
+                service.getId(),
+                true,
+                child.getId()
+        );
 
-        assertThat(reservationsService.getReservations()).contains(testReservation);
-
+        assertThat(reservationsService.getReservations(null, null, null)).contains(testReservationDTO);
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddReservationWithNullSchedule() {
-        reservationsService.addReservation(DATE_TIME, null, service, true, child);
+
+        reservationsService.addReservation(
+                new ReservationDTO(
+                        null,
+                        DATE_TIME,
+                        null,
+                        service.getId(),
+                        true,
+                        child.getId()
+                )
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddReservationWithNullService() {
-        reservationsService.addReservation(DATE_TIME, schedule, null, true, child);
+
+        reservationsService.addReservation(
+                new ReservationDTO(
+                        null,
+                        DATE_TIME,
+                        schedule.getId(),
+                        null,
+                        true,
+                        child.getId()
+                )
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddReservationWithNullChild() {
-        reservationsService.addReservation(DATE_TIME, schedule, service, true, null);
+
+        reservationsService.addReservation(
+                new ReservationDTO(
+                        null,
+                        DATE_TIME,
+                        schedule.getId(),
+                        service.getId(),
+                        true,
+                        null
+                )
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testAddReservationWithNullDateTime() {
-        reservationsService.addReservation(null, schedule, service, true, child);
+        reservationsService.addReservation(
+                new ReservationDTO(
+                        null,
+                        null,
+                        schedule.getId(),
+                        service.getId(),
+                        true,
+                        child.getId()
+                )
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -203,7 +270,16 @@ public class ReservationsServiceTest {
         final int minutes = 15;
         final LocalDateTime wrongDate = LocalDateTime.of(YEAR, Month.JULY, date, hour, minutes);
 
-        reservationsService.addReservation(wrongDate, schedule, service, true, child);
+        reservationsService.addReservation(
+                new ReservationDTO(
+                        null,
+                        wrongDate,
+                        schedule.getId(),
+                        service.getId(),
+                        true,
+                        child.getId()
+                )
+        );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -214,7 +290,16 @@ public class ReservationsServiceTest {
         final int wrongMinutes = 30;
         final LocalDateTime dateWithWrongTime = LocalDateTime.of(YEAR, MONTH, DAY, wrongHour, wrongMinutes);
 
-        reservationsService.addReservation(dateWithWrongTime, schedule, service, true, child);
+        reservationsService.addReservation(
+                new ReservationDTO(
+                        null,
+                        dateWithWrongTime,
+                        schedule.getId(),
+                        service.getId(),
+                        true,
+                        child.getId()
+                )
+        );
     }
 
     @Test(expected = ReservationAlreadyExistsException.class)
@@ -226,6 +311,39 @@ public class ReservationsServiceTest {
 
         LocalDateTime existedDateTime = LocalDateTime.of(YEAR, MONTH, DAY, reservedHour, reservedMinutes);
 
-        reservationsService.addReservation(existedDateTime, schedule, service, true, child);
+        reservationsService.addReservation(
+                new ReservationDTO(
+                        null,
+                        existedDateTime,
+                        schedule.getId(),
+                        service.getId(),
+                        true,
+                        child.getId()
+                )
+        );
+    }
+
+    @Test
+    @Transactional
+    public void testGetReservations() {
+        assertThat(reservationsService.getReservations(null, null, null)).isNotNull().isNotEmpty();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Transactional
+    public void testGetReservationsWithWrongDateParametersOne() {
+        reservationsService.getReservations(null, DATE, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Transactional
+    public void testGetReservationsWithWrongDateParametersTwo() {
+        reservationsService.getReservations(DATE, DATE, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Transactional
+    public void testGetReservationsWithWrongDateParametersThree() {
+        reservationsService.getReservations(DATE, null, DATE);
     }
 }
