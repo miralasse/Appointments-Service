@@ -1,11 +1,15 @@
 package appointments.handlers;
 
+import appointments.dto.UserDTO;
 import appointments.exceptions.EntityNotFoundException;
+import appointments.exceptions.UserAlreadyExistsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.ui.Model;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -27,8 +31,8 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
 
     /** Метод, реализующий обработку исключений, возникающих при некорректных входных данных*/
-    @ExceptionHandler(IllegalArgumentException.class)
-    protected ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+    @ExceptionHandler({IllegalArgumentException.class})
+    protected ResponseEntity<String> handleIllegalArgumentException(Exception e) {
 
         log.error(e.getMessage());
 
@@ -39,8 +43,8 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
     }
 
     /** Метод, реализующий обработку исключений, возникающих при отсутствии ресурса с указанным идентификатором */
-    @ExceptionHandler(EntityNotFoundException.class)
-    protected ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException e) {
+    @ExceptionHandler({EntityNotFoundException.class, UsernameNotFoundException.class})
+    protected ResponseEntity<String> handleEntityNotFoundException(Exception e) {
 
         log.error(e.getMessage());
 
@@ -49,6 +53,20 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
                 HttpStatus.NOT_FOUND
         );
     }
+
+    /** Метод, реализующий обработку исключений, возникающих при попытке добавить пользователя,
+     * уникальное имя которого уже есть в базе */
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    protected String handleUserAlreadyExistsException(UserAlreadyExistsException e, Model model) {
+
+        log.error(e.getMessage());
+
+        model.addAttribute("user", new UserDTO());
+        model.addAttribute("usernameExistsError", e.getMessage());
+
+        return "sign-up";
+    }
+
 
 
     /** Метод, реализующий обработку исключений, возникающих при нарушении правил валидации полей */

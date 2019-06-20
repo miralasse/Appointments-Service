@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -48,8 +49,8 @@ public class Specialist {
     private Integer id;
 
 
-    /** Поле для указания должности или ФИО специалиста для отображения на сайте */
-    @NotNull(message = SPECIALIST_EMPTY_NAME_MESSAGE)
+    /** Должность или ФИО специалиста для отображения на сайте */
+    @NotEmpty(message = SPECIALIST_EMPTY_NAME_MESSAGE)
     @Size(
             min = SPECIALIST_MIN_NAME_LENGTH,
             max = SPECIALIST_MAX_NAME_LENGTH,
@@ -59,8 +60,8 @@ public class Specialist {
     private String name;
 
 
-    /** Поле Номер кабинета */
-    @NotNull(message = SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE)
+    /** Номер кабинета */
+    @NotEmpty(message = SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE)
     @Size(
             min = SPECIALIST_MIN_ROOM_NUMBER_LENGTH,
             max = SPECIALIST_MAX_ROOM_NUMBER_LENGTH,
@@ -70,12 +71,12 @@ public class Specialist {
     private String roomNumber;
 
 
-    /** Поле Флаг активности специалиста */
+    /** Флаг активности специалиста */
     @Column
     private boolean active;
 
 
-    /** Поле Ссылка на организацию (объект Organization), к которой относится специалист */
+    /** Ссылка на организацию (объект Organization), к которой относится специалист */
     @NotNull(message = SPECIALIST_EMPTY_ORGANIZATION_MESSAGE)
     @ManyToOne
     @JoinColumn(name = "organization_id")

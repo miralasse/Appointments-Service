@@ -11,7 +11,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
 import static appointments.utils.Constants.SERVICE_MAX_NAME_LENGTH;
@@ -41,8 +41,8 @@ public class Service {
     private Integer id;
 
 
-    /** Поле Название услуги*/
-    @NotNull(message = SERVICE_NULL_NAME_MESSAGE)
+    /** Название услуги */
+    @NotEmpty(message = SERVICE_NULL_NAME_MESSAGE)
     @Size(
             min = SERVICE_MIN_NAME_LENGTH,
             max = SERVICE_MAX_NAME_LENGTH,
@@ -52,7 +52,7 @@ public class Service {
     private String name;
 
 
-    /** Поле Флаг активности */
+    /** Флаг активности */
     @Column
     private boolean active;
 }

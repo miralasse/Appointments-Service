@@ -3,15 +3,20 @@ package appointments;
 import appointments.domain.Child;
 import appointments.domain.Organization;
 import appointments.domain.Reservation;
+import appointments.domain.Role;
 import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.domain.Specialist;
+import appointments.domain.User;
+import appointments.integration.TestRestClient;
 import appointments.repos.ChildrenRepository;
 import appointments.repos.OrganizationsRepository;
 import appointments.repos.ReservationsRepository;
+import appointments.repos.RolesRepository;
 import appointments.repos.SchedulesRepository;
 import appointments.repos.ServicesRepository;
 import appointments.repos.SpecialistsRepository;
+import appointments.repos.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -81,6 +86,14 @@ public class TestHelper {
     public final static LocalDateTime FIFTH_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_FIFTEEN, 12, 30);
 
+    private final static String USER_ROLE = "ROLE_USER";
+    private final static String ADMIN_ROLE = "ROLE_ADMIN";
+
+    private final static String ADMIN_LOGIN = "admin";
+    private final static String ADMIN_PASSWORD = "100";
+    private final static String USER_LOGIN = "user";
+    private final static String USER_PASSWORD = "100";
+
     /** Поля для хранения репозиториев */
     private ChildrenRepository childrenRepository;
     private OrganizationsRepository organizationsRepository;
@@ -88,6 +101,8 @@ public class TestHelper {
     private SpecialistsRepository specialistsRepository;
     private SchedulesRepository schedulesRepository;
     private ReservationsRepository reservationsRepository;
+    private RolesRepository rolesRepository;
+    private UsersRepository usersRepository;
 
     @Autowired
     public TestHelper(
@@ -96,7 +111,9 @@ public class TestHelper {
             ServicesRepository servicesRepository,
             SpecialistsRepository specialistsRepository,
             SchedulesRepository schedulesRepository,
-            ReservationsRepository reservationsRepository
+            ReservationsRepository reservationsRepository,
+            RolesRepository rolesRepository,
+            UsersRepository usersRepository
     ) {
         this.childrenRepository = childrenRepository;
         this.organizationsRepository = organizationsRepository;
@@ -104,6 +121,18 @@ public class TestHelper {
         this.specialistsRepository = specialistsRepository;
         this.schedulesRepository = schedulesRepository;
         this.reservationsRepository = reservationsRepository;
+        this.rolesRepository = rolesRepository;
+        this.usersRepository = usersRepository;
+    }
+
+    /** Метод для логина пользователя с ролью ADMIN и получения идентификатора сессии */
+    public String loginAsAdmin(TestRestClient restClient) {
+        return restClient.login(ADMIN_LOGIN, ADMIN_PASSWORD);
+    }
+
+    /** Метод для логина пользователя с ролью USER и получения идентификатора сессии */
+    public String loginAsUser(TestRestClient restClient) {
+        return restClient.login(USER_LOGIN, USER_PASSWORD);
     }
 
     /** Метод для очистки и первичного наполнения всех таблиц */
@@ -115,12 +144,47 @@ public class TestHelper {
 
     /** Метод для первичного наполнения всех таблиц */
     public void initAll() {
+        initRoles();
+        initUsers();
         initChildren();
         initOrganizations();
         initServices();
         initSpecialists();
         initSchedules();
         initReservations();
+    }
+
+
+    public void initRoles() {
+        rolesRepository.save(new Role(null, USER_ROLE));
+        rolesRepository.save(new Role(null, ADMIN_ROLE));
+    }
+
+    public void initUsers() {
+
+        usersRepository.save(new User(
+                        null,
+                        "user",
+                        "$2a$04$Fx/SX9.BAvtPlMyIIqqFx.hLY2Xp8nnhpzvEEVINvVpwIPbA3v/.i",
+                        "Mary",
+                        "Green",
+                        "user@gmail.com",
+                        "+79203333333",
+                        rolesRepository.findOneByName(USER_ROLE).get()
+                )
+        );
+
+        usersRepository.save(new User(
+                null,
+                "admin",
+                "$2a$04$Fx/SX9.BAvtPlMyIIqqFx.hLY2Xp8nnhpzvEEVINvVpwIPbA3v/.i",
+                "John",
+                "Smith",
+                "admin@gmail.com",
+                "+79201111111",
+                rolesRepository.findOneByName(ADMIN_ROLE).get()
+                )
+        );
     }
 
     /** Метод для первичного наполнения таблицы children */
@@ -357,9 +421,11 @@ public class TestHelper {
         clearServices();
         clearOrganizations();
         clearChildren();
+        clearUsers();
+        clearRoles();
     }
 
-    /** Метод для очистки таблицы reservations */
+    /** Метод для очистки таблицы children */
     public void clearChildren() {
         childrenRepository.deleteAll();
     }
@@ -387,6 +453,16 @@ public class TestHelper {
     /** Метод для очистки таблицы reservations */
     public void clearReservations() {
         reservationsRepository.deleteAll();
+    }
+
+    /** Метод для очистки таблицы users */
+    public void clearUsers() {
+        usersRepository.deleteAll();
+    }
+
+    /** Метод для очистки таблицы roles */
+    public void clearRoles() {
+        rolesRepository.deleteAll();
     }
 
 }

@@ -198,68 +198,6 @@ public class ReservationsServiceTest {
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddReservationWithNullSchedule() {
-
-        reservationsService.addReservation(
-                new ReservationDTO(
-                        null,
-                        DATE_TIME,
-                        null,
-                        service.getId(),
-                        true,
-                        child.getId()
-                )
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddReservationWithNullService() {
-
-        reservationsService.addReservation(
-                new ReservationDTO(
-                        null,
-                        DATE_TIME,
-                        schedule.getId(),
-                        null,
-                        true,
-                        child.getId()
-                )
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddReservationWithNullChild() {
-
-        reservationsService.addReservation(
-                new ReservationDTO(
-                        null,
-                        DATE_TIME,
-                        schedule.getId(),
-                        service.getId(),
-                        true,
-                        null
-                )
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddReservationWithNullDateTime() {
-        reservationsService.addReservation(
-                new ReservationDTO(
-                        null,
-                        null,
-                        schedule.getId(),
-                        service.getId(),
-                        true,
-                        child.getId()
-                )
-        );
-    }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional

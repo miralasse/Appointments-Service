@@ -107,42 +107,6 @@ public class SchedulesServiceTest {
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddScheduleWithNullSpecialist() {
-
-        schedulesService.addSchedule(
-                new ScheduleDTO(
-                        null,
-                        null,
-                        DATE,
-                        serviceIds,
-                        START_TIME,
-                        END_TIME,
-                        INTERVAL,
-                        RESERVATION_IDS,
-                        true
-                )
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddScheduleWithNullDate() {
-        schedulesService.addSchedule(
-                new ScheduleDTO(
-                        null,
-                        specialist.getId(),
-                        null,
-                        serviceIds,
-                        START_TIME,
-                        END_TIME,
-                        INTERVAL,
-                        RESERVATION_IDS,
-                        true
-                )
-        );
-    }
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional
@@ -159,82 +123,6 @@ public class SchedulesServiceTest {
                         START_TIME,
                         END_TIME,
                         INTERVAL,
-                        RESERVATION_IDS,
-                        true
-                )
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddScheduleWithNullServices() {
-
-        schedulesService.addSchedule(
-                new ScheduleDTO(
-                        null,
-                        specialist.getId(),
-                        DATE,
-                        null,
-                        START_TIME,
-                        END_TIME,
-                        INTERVAL,
-                        RESERVATION_IDS,
-                        true
-                )
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddScheduleWithNullStartTime() {
-
-        schedulesService.addSchedule(
-                new ScheduleDTO(
-                        null,
-                        specialist.getId(),
-                        DATE,
-                        serviceIds,
-                        null,
-                        END_TIME,
-                        INTERVAL,
-                        RESERVATION_IDS,
-                        true
-                )
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddScheduleWithNullEndTime() {
-
-        schedulesService.addSchedule(
-                new ScheduleDTO(
-                        null,
-                        specialist.getId(),
-                        DATE,
-                        serviceIds,
-                        START_TIME,
-                        null,
-                        INTERVAL,
-                        RESERVATION_IDS,
-                        true
-                )
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddScheduleWithNullInterval() {
-
-        schedulesService.addSchedule(
-                new ScheduleDTO(
-                        null,
-                        specialist.getId(),
-                        DATE,
-                        serviceIds,
-                        START_TIME,
-                        END_TIME,
-                        null,
                         RESERVATION_IDS,
                         true
                 )

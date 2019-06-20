@@ -1,4 +1,4 @@
-package appointments.controllers;
+package appointments.controllers.rest_controllers;
 
 import appointments.dto.ReservationDTO;
 import appointments.services.ReservationsService;

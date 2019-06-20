@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,25 +48,33 @@ public class ServicesControllerIntegrationTest {
     @Autowired
     private ServicesRepository servicesRepository;
 
+    private TestRestClient restClient;
+
+    private String jSessionId;
 
     private final String endpoint = "/services/";
     private final String endpointWithId = "/services/{id}";
     private final String endpointForPatch = "/services/{id}?_method=patch";
 
+
     @Before
     public void setUp() {
+
         testHelper.clearAll();
+        testHelper.initRoles();
+        testHelper.initUsers();
         testHelper.initServices();
+        restClient = new TestRestClient(restTemplate);
+        jSessionId = testHelper.loginAsAdmin(restClient);
     }
 
     @Test
     public void testGetAllServices() {
 
-        final ResponseEntity<List<Service>> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<Service>>() { }
+        final ResponseEntity<List<Service>> response = restClient.getList(
+            endpoint,
+            jSessionId,
+            new ParameterizedTypeReference<List<Service>>() { }
         );
 
         final List<Service> services = response.getBody();
@@ -84,10 +91,10 @@ public class ServicesControllerIntegrationTest {
         final String url = endpoint + "active";
 
         final ResponseEntity<List<Service>> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<Service>>() { }
+            url,
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Service>>() { }
         );
 
         final List<Service> services = response.getBody();
@@ -98,12 +105,20 @@ public class ServicesControllerIntegrationTest {
     @Test
     public void testGetServiceById() {
 
-        final int id = servicesService
-                .addService(TEST_SERVICE_NAME, true)
-                .getId();
 
-        final Service actualService
-                = restTemplate.getForObject(endpointWithId, Service.class, id);
+        final int id = servicesService
+            .addService(TEST_SERVICE_NAME, true)
+            .getId();
+
+        final ResponseEntity<Service> response = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.GET,
+            Service.class,
+            id
+        );
+
+        final Service actualService = response.getBody();
 
         assertThat(actualService.getId()).isEqualTo(id);
         assertThat(actualService.getName()).isEqualTo(TEST_SERVICE_NAME);
@@ -115,12 +130,12 @@ public class ServicesControllerIntegrationTest {
 
         final int id = Integer.MIN_VALUE;
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpointWithId,
-                HttpMethod.GET,
-                null,
-                String.class,
-                id
+        final ResponseEntity<String> response = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.GET,
+            String.class,
+            id
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -131,8 +146,8 @@ public class ServicesControllerIntegrationTest {
     public void testDeleteServiceById() {
 
         final int id = servicesService
-                .addService(TEST_SERVICE_NAME, true)
-                .getId();
+            .addService(TEST_SERVICE_NAME, true)
+            .getId();
 
         final Service testService = new Service(id, TEST_SERVICE_NAME, true);
         final List<Service> servicesBeforeRemoving = servicesRepository.findAll();
@@ -140,12 +155,12 @@ public class ServicesControllerIntegrationTest {
 
         assertThat(servicesBeforeRemoving).contains(testService);
 
-        final ResponseEntity<String> deleteResponse = restTemplate.exchange(
-                endpointWithId,
-                HttpMethod.DELETE,
-                null,
-                String.class,
-                id
+        final ResponseEntity<String> deleteResponse = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.DELETE,
+            String.class,
+            id
         );
 
         assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
@@ -160,14 +175,15 @@ public class ServicesControllerIntegrationTest {
 
     @Test
     public void testDeleteServiceByIdWithWrongId() {
+
         final int id = Integer.MIN_VALUE;
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpointWithId,
-                HttpMethod.GET,
-                null,
-                String.class,
-                id
+        final ResponseEntity<String> response = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.GET,
+            String.class,
+            id
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -182,7 +198,13 @@ public class ServicesControllerIntegrationTest {
 
         final Service testService = new Service(null, TEST_SERVICE_NAME, true);
 
-        final ResponseEntity<Service> response = restTemplate.postForEntity(endpoint, testService, Service.class);
+        final ResponseEntity<Service> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testService,
+            Service.class
+        );
 
         final List<Service> servicesAfterAdding = servicesRepository.findAll();
         final int actualSize = servicesAfterAdding.size();
@@ -203,12 +225,13 @@ public class ServicesControllerIntegrationTest {
 
         final Service testService = new Service(null, "a", true);
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testService),
-                new ParameterizedTypeReference<String>() { }
-         );
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testService,
+            String.class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains(SERVICE_WRONG_LENGTH_MESSAGE);
@@ -220,11 +243,12 @@ public class ServicesControllerIntegrationTest {
 
         final Service testService = new Service(null, null, true);
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testService),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testService,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -235,14 +259,20 @@ public class ServicesControllerIntegrationTest {
     public void testPatchDeactivateServiceStatus() {
 
         final int id = servicesService
-                .addService(TEST_SERVICE_NAME, true)
-                .getId();
+            .addService(TEST_SERVICE_NAME, true)
+            .getId();
 
         final ActiveDTO notActiveDTO = new ActiveDTO();
         notActiveDTO.setActive(false);
 
-        final ResponseEntity<ActiveDTO> response
-                = restTemplate.postForEntity(endpointForPatch, new HttpEntity<>(notActiveDTO), ActiveDTO.class, id);
+        final ResponseEntity<ActiveDTO> response = restClient.exchange(
+            endpointForPatch,
+            jSessionId,
+            HttpMethod.POST,
+            notActiveDTO,
+            ActiveDTO.class,
+            id
+        );
 
         final Service actualService = servicesRepository.findById(id).get();
 
@@ -254,14 +284,20 @@ public class ServicesControllerIntegrationTest {
     public void testPatchActivateServiceStatus() {
 
         final int id = servicesService
-                .addService(TEST_SERVICE_NAME, false)
-                .getId();
+            .addService(TEST_SERVICE_NAME, false)
+            .getId();
 
         final ActiveDTO activeDTO = new ActiveDTO();
         activeDTO.setActive(true);
 
-        final ResponseEntity<ActiveDTO> response
-                = restTemplate.postForEntity(endpointForPatch, new HttpEntity<>(activeDTO), ActiveDTO.class, id);
+        final ResponseEntity<ActiveDTO> response = restClient.exchange(
+            endpointForPatch,
+            jSessionId,
+            HttpMethod.POST,
+            activeDTO,
+            ActiveDTO.class,
+            id
+        );
 
         final Service actualService = servicesRepository.findById(id).get();
 

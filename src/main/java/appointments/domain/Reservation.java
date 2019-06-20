@@ -46,32 +46,32 @@ public class Reservation {
     @Column
     private Long id;
 
-    /** Поле даты и времени начала приема для этого талона */
+    /** Дата и время начала приема для этого талона */
     @NotNull(message = RESERVATION_INCORRECT_DATETIME_MESSAGE)
     @Column(name = "date_time")
     private LocalDateTime dateTime;
 
 
-    /** Поле Ссылка на расписание (объект Schedule), в котором осуществляется эта запись на прием */
+    /** Ссылка на расписание (объект Schedule), в котором осуществляется эта запись на прием */
     @NotNull(message = RESERVATION_EMPTY_SCHEDULE_MESSAGE)
     @ManyToOne
     @JoinColumn(name = "schedule_id")
     private Schedule schedule;
 
 
-    /** Поле Ссылка на услугу (объект Service), которая выбрана как цель обращения при бронировании времени */
+    /** Ссылка на услугу (объект Service), которая выбрана как цель обращения при бронировании времени */
     @NotNull(message = RESERVATION_EMPTY_SERVICE_MESSAGE)
     @ManyToOne
     @JoinColumn(name = "service_id")
     private Service service;
 
 
-    /** Поле Флаг активности */
+    /** Флаг активности */
     @Column
     private boolean active;
 
 
-    /** Поле Ссылка на ребёнка (объект Child), в интересах которого осуществлена эта запись на прием */
+    /** Ссылка на ребёнка (объект Child), в интересах которого осуществлена эта запись на прием */
     @NotNull(message = RESERVATION_EMPTY_CHILD_MESSAGE)
     @ManyToOne
     @JoinColumn(name = "child_id")

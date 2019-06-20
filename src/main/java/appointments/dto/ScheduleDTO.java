@@ -31,6 +31,7 @@ import static appointments.utils.Constants.SCHEDULE_WRONG_INTERVAL_LENGTH;
 @ToString(exclude = "reservationIds")
 public class ScheduleDTO {
 
+    /** Индентификатора расписания: null для нового, not null для существующего */
     private Long id;
 
 
