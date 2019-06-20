@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +32,6 @@ import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_WRONG_NAME_LENGTH;
 import static appointments.utils.Constants.SPECIALIST_WRONG_ROOM_NUMBER_LENGTH;
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 
 /**
@@ -68,6 +66,10 @@ public class SpecialistsControllerIntegrationTest {
     @Autowired
     private SpecialistMapper mapper;
 
+    private TestRestClient restClient;
+
+    private String jSessionId;
+
     private final String endpoint = "/specialists/";
     private final String endpointWithId = "/specialists/{id}";
     private final String endpointForPatch = "/specialists/{id}?_method=patch";
@@ -76,20 +78,23 @@ public class SpecialistsControllerIntegrationTest {
     public void setUp() {
 
         testHelper.clearAll();
+        testHelper.initRoles();
+        testHelper.initUsers();
         testHelper.initServices();
         testHelper.initOrganizations();
         testHelper.initSpecialists();
         organization = organizationsRepository.findOneByName(ORGANIZATION_NAME).orElse(null);
+        restClient = new TestRestClient(restTemplate);
+        jSessionId = testHelper.loginAsAdmin(restClient);
     }
 
     @Test
     public void testGetAllSpecialists() {
 
-        final ResponseEntity<List<SpecialistDTO>> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<SpecialistDTO>>() { }
+        final ResponseEntity<List<SpecialistDTO>> response = restClient.getList(
+            endpoint,
+            jSessionId,
+            new ParameterizedTypeReference<List<SpecialistDTO>>() { }
         );
 
         final List<SpecialistDTO> specialistDTOs = response.getBody();
@@ -97,13 +102,13 @@ public class SpecialistsControllerIntegrationTest {
         assertThat(specialistDTOs).hasSize(specialistsRepository.findAll().size());
 
         assertThat(specialistDTOs)
-                .anySatisfy(s -> assertThat(s.getName()).isEqualTo(TestHelper.SPECIALIST_NAME_FIRST));
+            .anySatisfy(s -> assertThat(s.getName()).isEqualTo(TestHelper.SPECIALIST_NAME_FIRST));
 
         assertThat(specialistDTOs)
-                .anySatisfy(s -> assertThat(s.getName()).isEqualTo(TestHelper.SPECIALIST_NAME_SECOND));
+            .anySatisfy(s -> assertThat(s.getName()).isEqualTo(TestHelper.SPECIALIST_NAME_SECOND));
 
         assertThat(specialistDTOs)
-                .anySatisfy(s -> assertThat(s.getName()).isEqualTo(TestHelper.SPECIALIST_NAME_THIRD));
+            .anySatisfy(s -> assertThat(s.getName()).isEqualTo(TestHelper.SPECIALIST_NAME_THIRD));
     }
 
     @Test
@@ -112,10 +117,10 @@ public class SpecialistsControllerIntegrationTest {
         final String url = endpoint + "active";
 
         final ResponseEntity<List<SpecialistDTO>> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<SpecialistDTO>>() { }
+            url,
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<SpecialistDTO>>() { }
         );
 
         final List<SpecialistDTO> specialistDTOs = response.getBody();
@@ -127,12 +132,20 @@ public class SpecialistsControllerIntegrationTest {
     public void testGetSpecialistById() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            ).getId();
 
-        final SpecialistDTO actualSpecialistDTO
-                = restTemplate.getForObject(endpointWithId, SpecialistDTO.class, id);
+
+        final ResponseEntity<SpecialistDTO> response = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.GET,
+            SpecialistDTO.class,
+            id
+        );
+
+        final SpecialistDTO actualSpecialistDTO = response.getBody();
 
         assertThat(actualSpecialistDTO.getId()).isEqualTo(id);
         assertThat(actualSpecialistDTO.getName()).isEqualTo(TEST_SPECIALIST_NAME);
@@ -146,12 +159,12 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = Integer.MIN_VALUE;
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpointWithId,
-                HttpMethod.GET,
-                null,
-                String.class,
-                id
+        final ResponseEntity<String> response = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.GET,
+            String.class,
+            id
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -162,25 +175,25 @@ public class SpecialistsControllerIntegrationTest {
     public void testDeleteSpecialistById() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                )
-                .getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            )
+            .getId();
 
         final Specialist testSpecialist
-                = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization);
+            = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization);
 
         final List<Specialist> specialistsBeforeRemoving = specialistsRepository.findAll();
         final int expectedSize = specialistsBeforeRemoving.size() - 1;
 
         assertThat(specialistsBeforeRemoving).contains(testSpecialist);
 
-        final ResponseEntity<String> deleteResponse = restTemplate.exchange(
-                endpointWithId,
-                HttpMethod.DELETE,
-                null,
-                String.class,
-                id
+        final ResponseEntity<String> deleteResponse = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.DELETE,
+            String.class,
+            id
         );
 
         assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
@@ -197,12 +210,12 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = Integer.MIN_VALUE;
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpointWithId,
-                HttpMethod.DELETE,
-                null,
-                String.class,
-                id
+        final ResponseEntity<String> response = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.DELETE,
+            String.class,
+            id
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -216,10 +229,15 @@ public class SpecialistsControllerIntegrationTest {
         final int expectedSize = specialistsBeforeAdding.size() + 1;
 
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
+            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
 
-        final ResponseEntity<SpecialistDTO> response
-                = restTemplate.postForEntity(endpoint, testSpecialistDTO, SpecialistDTO.class);
+        final ResponseEntity<SpecialistDTO> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testSpecialistDTO,
+            SpecialistDTO.class
+        );
 
         final List<Specialist> specialistsAfterAdding = specialistsRepository.findAll();
         final int actualSize = specialistsAfterAdding.size();
@@ -242,13 +260,14 @@ public class SpecialistsControllerIntegrationTest {
     public void testPostSpecialistWithWrongName() {
 
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(null, "a", ROOM_NUMBER, true, organization.getId());
+            = new SpecialistDTO(null, "a", ROOM_NUMBER, true, organization.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testSpecialistDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testSpecialistDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -259,13 +278,14 @@ public class SpecialistsControllerIntegrationTest {
     public void testPostSpecialistWithNullName() {
 
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(null, null, ROOM_NUMBER, true, organization.getId());
+            = new SpecialistDTO(null, null, ROOM_NUMBER, true, organization.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testSpecialistDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testSpecialistDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -278,13 +298,14 @@ public class SpecialistsControllerIntegrationTest {
         final String tooLongRoomNumber = "1234567891123456789";
 
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(null, TEST_SPECIALIST_NAME, tooLongRoomNumber, true, organization.getId());
+            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, tooLongRoomNumber, true, organization.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testSpecialistDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testSpecialistDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -297,13 +318,14 @@ public class SpecialistsControllerIntegrationTest {
         int wrongId = Integer.MIN_VALUE;
 
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, wrongId);
+            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, wrongId);
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testSpecialistDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testSpecialistDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -314,13 +336,14 @@ public class SpecialistsControllerIntegrationTest {
     public void testPostSpecialistWithNullRoomNumber() {
 
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(null, TEST_SPECIALIST_NAME, null, true, organization.getId());
+            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, null, true, organization.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testSpecialistDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testSpecialistDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -331,13 +354,14 @@ public class SpecialistsControllerIntegrationTest {
     public void testPostSpecialistWithNullOrganization() {
 
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, null);
+            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, null);
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testSpecialistDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testSpecialistDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -348,19 +372,20 @@ public class SpecialistsControllerIntegrationTest {
     public void testUpdateSpecialistsName() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            ).getId();
 
         final List<Specialist> specialistsBeforeUpdating = specialistsRepository.findAll();
         final int expectedSize = specialistsBeforeUpdating.size();
         final String changedName = "Петрова Екатерина Васильевна";
 
-        final ResponseEntity<SpecialistDTO> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.PUT,
-                new HttpEntity<>(new SpecialistDTO(id, changedName, ROOM_NUMBER, true, organization.getId())),
-                SpecialistDTO.class
+        final ResponseEntity<SpecialistDTO> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.PUT,
+            new SpecialistDTO(id, changedName, ROOM_NUMBER, true, organization.getId()),
+            SpecialistDTO.class
         );
 
         final List<Specialist> specialistsAfterUpdating = specialistsRepository.findAll();
@@ -382,17 +407,18 @@ public class SpecialistsControllerIntegrationTest {
     public void testUpdateSpecialistWithWrongName() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            ).getId();
 
         final String changedName = "b";
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.PUT,
-                new HttpEntity<>(new SpecialistDTO(id, changedName, ROOM_NUMBER, true, organization.getId())),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.PUT,
+            new SpecialistDTO(id, changedName, ROOM_NUMBER, true, organization.getId()),
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -403,20 +429,20 @@ public class SpecialistsControllerIntegrationTest {
     public void testUpdateSpecialistsRoomNumber() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            ).getId();
 
         final List<Specialist> specialistsBeforeUpdating = specialistsRepository.findAll();
         final int expectedSize = specialistsBeforeUpdating.size();
         final String changedRoomNumber = "18";
 
-        final ResponseEntity<SpecialistDTO> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.PUT,
-                new HttpEntity<>(
-                        new SpecialistDTO(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization.getId())),
-                SpecialistDTO.class
+        final ResponseEntity<SpecialistDTO> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.PUT,
+            new SpecialistDTO(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization.getId()),
+            SpecialistDTO.class
         );
 
         final List<Specialist> specialistsAfterUpdating = specialistsRepository.findAll();
@@ -438,19 +464,18 @@ public class SpecialistsControllerIntegrationTest {
     public void testUpdateSpecialistWithWrongRoomNumber() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            ).getId();
 
         final String changedRoomNumber = "12345678911234567";
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.PUT,
-                new HttpEntity<>(
-                        new SpecialistDTO(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization.getId())
-                ),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.PUT,
+            new SpecialistDTO(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization.getId()),
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -461,18 +486,19 @@ public class SpecialistsControllerIntegrationTest {
     public void testUpdateSpecialistsActive() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            ).getId();
 
         final List<Specialist> specialistsBeforeUpdating = specialistsRepository.findAll();
         final int expectedSize = specialistsBeforeUpdating.size();
 
-        final ResponseEntity<SpecialistDTO> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.PUT,
-                new HttpEntity<>(new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId())),
-                SpecialistDTO.class
+        final ResponseEntity<SpecialistDTO> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.PUT,
+            new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId()),
+            SpecialistDTO.class
         );
 
         final List<Specialist> specialistsAfterUpdating = specialistsRepository.findAll();
@@ -494,22 +520,21 @@ public class SpecialistsControllerIntegrationTest {
     public void testUpdateSpecialistsOrganization() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            ).getId();
 
         final List<Specialist> specialistsBeforeUpdating = specialistsRepository.findAll();
         final int expectedSize = specialistsBeforeUpdating.size();
         final Organization changedOrganization
-                = organizationsRepository.findOneByName("Управление образования г. Старый Оскол").orElse(null);
+            = organizationsRepository.findOneByName("Управление образования г. Старый Оскол").orElse(null);
 
-        final ResponseEntity<SpecialistDTO> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.PUT,
-                new HttpEntity<>(
-                        new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, changedOrganization.getId())
-                ),
-                SpecialistDTO.class
+        final ResponseEntity<SpecialistDTO> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.PUT,
+            new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, changedOrganization.getId()),
+            SpecialistDTO.class
         );
 
         final List<Specialist> specialistsAfterUpdating = specialistsRepository.findAll();
@@ -531,15 +556,21 @@ public class SpecialistsControllerIntegrationTest {
     public void testPatchDeactivateServiceStatus() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+            ).getId();
 
         final ActiveDTO notActiveDTO = new ActiveDTO();
         notActiveDTO.setActive(false);
 
-        final ResponseEntity<String> response
-                = restTemplate.postForEntity(endpointForPatch, new HttpEntity<>(notActiveDTO), String.class, id);
+        final ResponseEntity<ActiveDTO> response = restClient.exchange(
+            endpointForPatch,
+            jSessionId,
+            HttpMethod.POST,
+            notActiveDTO,
+            ActiveDTO.class,
+            id
+        );
 
         final Specialist actualSpecialist = specialistsRepository.findById(id).get();
 
@@ -551,15 +582,21 @@ public class SpecialistsControllerIntegrationTest {
     public void testPatchActivateServiceStatus() {
 
         final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId())
-                ).getId();
+            .addSpecialist(
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId())
+            ).getId();
 
         final ActiveDTO activeDTO = new ActiveDTO();
         activeDTO.setActive(true);
 
-        final ResponseEntity<String> response
-                = restTemplate.postForEntity(endpointForPatch, new HttpEntity<>(activeDTO), String.class, id);
+        final ResponseEntity<ActiveDTO> response = restClient.exchange(
+            endpointForPatch,
+            jSessionId,
+            HttpMethod.POST,
+            activeDTO,
+            ActiveDTO.class,
+            id
+        );
 
         final Specialist actualSpecialist = specialistsRepository.findById(id).get();
 

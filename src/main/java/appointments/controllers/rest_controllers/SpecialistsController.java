@@ -1,4 +1,4 @@
-package appointments.controllers;
+package appointments.controllers.rest_controllers;
 
 import appointments.dto.ActiveDTO;
 import appointments.dto.SpecialistDTO;

@@ -11,7 +11,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
 import static appointments.utils.Constants.ORGANIZATION_MAX_STRING_LENGTH;
@@ -45,8 +45,8 @@ public class Organization {
     private Integer id;
 
 
-    /** Поле Название */
-    @NotNull(message = ORGANIZATION_NULL_NAME_MESSAGE)
+    /** Название организации */
+    @NotEmpty(message = ORGANIZATION_NULL_NAME_MESSAGE)
     @Size(
             min = ORGANIZATION_MIN_STRING_LENGTH,
             max = ORGANIZATION_MAX_STRING_LENGTH,
@@ -56,8 +56,8 @@ public class Organization {
     private String name;
 
 
-    /** Поле Фактический адрес */
-    @NotNull(message = ORGANIZATION_NULL_ADDRESS_MESSAGE)
+    /** Фактический адрес */
+    @NotEmpty(message = ORGANIZATION_NULL_ADDRESS_MESSAGE)
     @Size(
             min = ORGANIZATION_MIN_STRING_LENGTH,
             max = ORGANIZATION_MAX_STRING_LENGTH,
@@ -67,8 +67,8 @@ public class Organization {
     private String actualAddress;
 
 
-    /** Поле Описание для внесения контактной и другой полезной информации */
-    @NotNull(message = ORGANIZATION_NULL_DESCRIPTION_MESSAGE)
+    /** Описание для внесения контактной и другой полезной информации */
+    @NotEmpty(message = ORGANIZATION_NULL_DESCRIPTION_MESSAGE)
     @Size(
             min = ORGANIZATION_MIN_STRING_LENGTH,
             max = ORGANIZATION_MAX_STRING_LENGTH,

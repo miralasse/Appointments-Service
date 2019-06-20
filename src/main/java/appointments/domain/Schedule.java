@@ -66,20 +66,20 @@ public class Schedule {
     private Long id;
 
 
-    /** Поле Ссылка на специалиста, к которому относится это расписание приема */
+    /** Ссылка на специалиста, к которому относится это расписание приема */
     @NotNull(message = SCHEDULE_EMPTY_SPECIALIST_MESSAGE)
     @ManyToOne
     @JoinColumn(name = "specialist_id")
     private Specialist specialist;
 
 
-    /** Поле Дата, на которую формируется это расписание */
+    /** Дата, на которую формируется это расписание */
     @NotNull(message =  SCHEDULE_INCORRECT_DATE_MESSAGE)
     @Column(name = "date")
     private LocalDate date;
 
 
-    /** Поле Список услуг (ссылки на объекты Услуг),
+    /** Список услуг (ссылки на объекты Услуг),
      * которые доступны в списке выбора при бронировании времени в этом расписании */
     @NotNull(message = SCHEDULE_EMPTY_SERVICES_MESSAGE)
     @ManyToMany
@@ -91,19 +91,19 @@ public class Schedule {
     private List<Service> services;
 
 
-    /** Поле Время начала приема */
+    /** Время начала приема */
     @NotNull(message = SCHEDULE_EMPTY_START_TIME_MESSAGE)
     @Column(name = "start_time")
     private LocalTime startTime;
 
 
-    /** Поле Время окончания приема */
+    /** Время окончания приема */
     @NotNull(message = SCHEDULE_EMPTY_END_TIME_MESSAGE)
     @Column(name = "end_time")
     private LocalTime endTime;
 
 
-    /** Поле Длительность/Интервал приема одного талона в минутах*/
+    /** Длительность/Интервал приема одного талона в минутах*/
     @NotNull(message = SCHEDULE_EMPTY_INTERVAL_MESSAGE)
     @Range(
             min = SCHEDULE_MIN_INTERVAL_LENGTH,
@@ -114,12 +114,12 @@ public class Schedule {
     private Integer intervalOfReception;
 
 
-    /** Поле Список забронированных интервалов времени (ссылки на объекты Reservation) в этом расписании */
+    /** Список забронированных интервалов времени (ссылки на объекты Reservation) в этом расписании */
     @OneToMany(mappedBy = "schedule")
     private List<Reservation> reservations;
 
 
-    /** Поле Флаг активности этого расписания */
+    /** Флаг активности этого расписания */
     @Column
     private boolean active;
 

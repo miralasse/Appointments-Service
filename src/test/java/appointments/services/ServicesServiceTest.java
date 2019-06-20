@@ -54,12 +54,6 @@ public class ServicesServiceTest {
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddServiceWithNullName() {
-        servicesService.addService(null, true);
-    }
-
     @Test
     @Transactional
     public void testRemoveService() {

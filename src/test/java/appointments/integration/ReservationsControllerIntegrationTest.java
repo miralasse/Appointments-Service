@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +42,6 @@ import static appointments.utils.Constants.SCHEDULE_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SERVICE_NOT_FOUND_MESSAGE;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 
 /**
@@ -94,7 +92,13 @@ public class ReservationsControllerIntegrationTest {
     @Autowired
     private ReservationsService reservationsService;
 
+    private TestRestClient restClient;
+
+    private String jSessionId;
+
     private final String endpoint = "/reservations/";
+    private final String endpointWithId = "/reservations/{id}";
+
 
     @Before
     public void setUp() {
@@ -104,17 +108,18 @@ public class ReservationsControllerIntegrationTest {
         child = childrenRepository.findOneByBirthCertificateNumber(BIRTH_CERTIFICATE).orElse(null);
         final Specialist specialist = specialistsRepository.findOneByName(SPECIALIST_NAME).orElse(null);
         schedule = schedulesRepository.findOneBySpecialistAndDate(specialist, DATE).orElse(null);
+        restClient = new TestRestClient(restTemplate);
+        jSessionId = testHelper.loginAsAdmin(restClient);
     }
 
     @Test
     @Transactional
     public void testGetAllReservations() {
 
-        final ResponseEntity<List<ReservationDTO>> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<ReservationDTO>>() { }
+        final ResponseEntity<List<ReservationDTO>> response = restClient.getList(
+            endpoint,
+            jSessionId,
+            new ParameterizedTypeReference<List<ReservationDTO>>() { }
         );
 
         List<ReservationDTO> reservationDTOs = response.getBody();
@@ -122,19 +127,19 @@ public class ReservationsControllerIntegrationTest {
         assertThat(reservationDTOs).hasSize(reservationsRepository.findAll().size());
 
         assertThat(reservationDTOs)
-                .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.FIRST_RESERVATION_HOUR));
+            .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.FIRST_RESERVATION_HOUR));
 
         assertThat(reservationDTOs)
-                .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.SECOND_RESERVATION_HOUR));
+            .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.SECOND_RESERVATION_HOUR));
 
         assertThat(reservationDTOs)
-                .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.THIRD_RESERVATION_HOUR));
+            .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.THIRD_RESERVATION_HOUR));
 
         assertThat(reservationDTOs)
-                .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.FOURTH_RESERVATION_HOUR));
+            .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.FOURTH_RESERVATION_HOUR));
 
         assertThat(reservationDTOs)
-                .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.FIFTH_RESERVATION_HOUR));
+            .anySatisfy(r -> assertThat(r.getDateTime()).isEqualTo(TestHelper.FIFTH_RESERVATION_HOUR));
     }
 
     @Test
@@ -143,12 +148,11 @@ public class ReservationsControllerIntegrationTest {
 
         final String url = endpoint + "?date={date}";
 
-        final ResponseEntity<List<ReservationDTO>> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<ReservationDTO>>() { },
-                DATE
+        final ResponseEntity<List<ReservationDTO>> response = restClient.getList(
+            url,
+            jSessionId,
+            new ParameterizedTypeReference<List<ReservationDTO>>() { },
+            DATE
         );
 
         final List<ReservationDTO> reservationDTOs = response.getBody();
@@ -156,15 +160,15 @@ public class ReservationsControllerIntegrationTest {
         assertThat(reservationDTOs).isNotNull();
 
         final List<Long> ids = reservationDTOs
-                .stream()
-                .map(ReservationDTO::getId)
-                .collect(toList());
+            .stream()
+            .map(ReservationDTO::getId)
+            .collect(toList());
 
         assertThat(
-                reservationsRepository
-                        .findAll()
-                        .stream()
-                        .filter(r -> !ids.contains(r.getId()) && DATE.equals(r.getDateTime().toLocalDate()))
+            reservationsRepository
+                .findAll()
+                .stream()
+                .filter(r -> !ids.contains(r.getId()) && DATE.equals(r.getDateTime().toLocalDate()))
         ).isEmpty();
 
     }
@@ -179,13 +183,12 @@ public class ReservationsControllerIntegrationTest {
         final int daysToAdd = 5;
         final LocalDate endDate = LocalDate.of(YEAR, MONTH, DAY + daysToAdd);
 
-        final ResponseEntity<List<ReservationDTO>> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<ReservationDTO>>() { },
-                startDate,
-                endDate
+        final ResponseEntity<List<ReservationDTO>> response = restClient.getList(
+            url,
+            jSessionId,
+            new ParameterizedTypeReference<List<ReservationDTO>>() { },
+            startDate,
+            endDate
         );
 
         List<ReservationDTO> reservationDTOs = response.getBody();
@@ -193,19 +196,19 @@ public class ReservationsControllerIntegrationTest {
         assertThat(reservationDTOs).isNotNull();
 
         final List<Long> ids = reservationDTOs
-                .stream()
-                .map(ReservationDTO::getId)
-                .collect(toList());
+            .stream()
+            .map(ReservationDTO::getId)
+            .collect(toList());
 
         assertThat(
-                reservationsRepository
-                        .findAll()
-                        .stream()
-                        .filter(
-                                r -> !ids.contains(r.getId())
-                                        && (!r.getDateTime().toLocalDate().isAfter(endDate)
-                                        && !r.getDateTime().toLocalDate().isBefore(startDate))
-                        )
+            reservationsRepository
+                .findAll()
+                .stream()
+                .filter(
+                    r -> !ids.contains(r.getId())
+                        && (!r.getDateTime().toLocalDate().isAfter(endDate)
+                        && !r.getDateTime().toLocalDate().isBefore(startDate))
+                )
         ).isEmpty();
     }
 
@@ -218,13 +221,13 @@ public class ReservationsControllerIntegrationTest {
         final int daysToAdd = 5;
         LocalDate endDate = LocalDate.of(YEAR, MONTH, DAY + daysToAdd);
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<String>() { },
-                DATE,
-                endDate
+        final ResponseEntity<String> response = restClient.exchange(
+            url,
+            jSessionId,
+            HttpMethod.GET,
+            String.class,
+            DATE,
+            endDate
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -234,21 +237,27 @@ public class ReservationsControllerIntegrationTest {
     @Transactional
     public void testGetReservationById() {
 
-        final String url = endpoint + "{id}";
-
         final long id = reservationsService
-                .addReservation(
-                        new ReservationDTO(
-                                null,
-                                DATE_TIME,
-                                schedule.getId(),
-                                service.getId(),
-                                true,
-                                child.getId()
-                        )
-                ).getId();
+            .addReservation(
+                new ReservationDTO(
+                    null,
+                    DATE_TIME,
+                    schedule.getId(),
+                    service.getId(),
+                    true,
+                    child.getId()
+                )
+            ).getId();
 
-        ReservationDTO actualReservationDTO = restTemplate.getForObject(url, ReservationDTO.class, id);
+        final ResponseEntity<ReservationDTO> response = restClient.exchange(
+            endpointWithId,
+            jSessionId,
+            HttpMethod.GET,
+            ReservationDTO.class,
+            id
+        );
+
+        final ReservationDTO actualReservationDTO = response.getBody();
 
         assertThat(actualReservationDTO.getId()).isEqualTo(id);
         assertThat(actualReservationDTO.getDateTime()).isEqualTo(DATE_TIME);
@@ -266,10 +275,15 @@ public class ReservationsControllerIntegrationTest {
         final int expectedSize = reservationsBeforeAdding.size() + 1;
 
         final ReservationDTO testReservationDTO
-                = new ReservationDTO(null, DATE_TIME, schedule.getId(), service.getId(), true, child.getId());
+            = new ReservationDTO(null, DATE_TIME, schedule.getId(), service.getId(), true, child.getId());
 
-        final ResponseEntity<ReservationDTO> response
-                = restTemplate.postForEntity(endpoint, testReservationDTO, ReservationDTO.class);
+        final ResponseEntity<ReservationDTO> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            ReservationDTO.class
+        );
 
         final List<Reservation> reservationsAfterAdding = reservationsRepository.findAll();
         final int actualSize = reservationsAfterAdding.size();
@@ -295,13 +309,14 @@ public class ReservationsControllerIntegrationTest {
     public void testPostScheduleWithNullDateTime() {
 
         final ReservationDTO testReservationDTO
-                = new ReservationDTO(null, null, schedule.getId(), service.getId(), true, child.getId());
+            = new ReservationDTO(null, null, schedule.getId(), service.getId(), true, child.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testReservationDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -313,13 +328,14 @@ public class ReservationsControllerIntegrationTest {
     public void testPostScheduleWithNullSchedule() {
 
         final ReservationDTO testReservationDTO
-                = new ReservationDTO(null, DATE_TIME, null, service.getId(), true, child.getId());
+            = new ReservationDTO(null, DATE_TIME, null, service.getId(), true, child.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testReservationDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -333,13 +349,14 @@ public class ReservationsControllerIntegrationTest {
         final long wrongId = Long.MIN_VALUE;
 
         final ReservationDTO testReservationDTO
-                = new ReservationDTO(null, DATE_TIME, wrongId, service.getId(), true, child.getId());
+            = new ReservationDTO(null, DATE_TIME, wrongId, service.getId(), true, child.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testReservationDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -351,13 +368,14 @@ public class ReservationsControllerIntegrationTest {
     public void testPostScheduleWithNullService() {
 
         final ReservationDTO testReservationDTO
-                = new ReservationDTO(null, DATE_TIME, schedule.getId(), null, true, child.getId());
+            = new ReservationDTO(null, DATE_TIME, schedule.getId(), null, true, child.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testReservationDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -371,13 +389,14 @@ public class ReservationsControllerIntegrationTest {
         final int wrongId = Integer.MIN_VALUE;
 
         final ReservationDTO testReservationDTO
-                = new ReservationDTO(null, DATE_TIME, schedule.getId(), wrongId, true, child.getId());
+            = new ReservationDTO(null, DATE_TIME, schedule.getId(), wrongId, true, child.getId());
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testReservationDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -389,13 +408,14 @@ public class ReservationsControllerIntegrationTest {
     public void testPostScheduleWithNullChild() {
 
         final ReservationDTO testReservationDTO
-                = new ReservationDTO(null, DATE_TIME, schedule.getId(), service.getId(), true, null);
+            = new ReservationDTO(null, DATE_TIME, schedule.getId(), service.getId(), true, null);
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testReservationDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -409,18 +429,57 @@ public class ReservationsControllerIntegrationTest {
         final int wrongId = Integer.MIN_VALUE;
 
         final ReservationDTO testReservationDTO
-                = new ReservationDTO(null, DATE_TIME, schedule.getId(), service.getId(), true, wrongId);
+            = new ReservationDTO(null, DATE_TIME, schedule.getId(), service.getId(), true, wrongId);
 
-        final ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.POST,
-                new HttpEntity<>(testReservationDTO),
-                new ParameterizedTypeReference<String>() { }
+        final ResponseEntity<String> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).contains(CHILD_NOT_FOUND_MESSAGE + wrongId);
     }
 
+    @Test
+    @Transactional
+    public void testPostScheduleWithUserAuth() {
+
+        jSessionId = testHelper.loginAsUser(restClient);
+
+        final List<Reservation> reservationsBeforeAdding = reservationsRepository.findAll();
+        final int expectedSize = reservationsBeforeAdding.size() + 1;
+
+        final ReservationDTO testReservationDTO
+            = new ReservationDTO(null, DATE_TIME, schedule.getId(), service.getId(), true, child.getId());
+
+        final ResponseEntity<ReservationDTO> response = restClient.exchange(
+            endpoint,
+            jSessionId,
+            HttpMethod.POST,
+            testReservationDTO,
+            ReservationDTO.class
+        );
+
+        final List<Reservation> reservationsAfterAdding = reservationsRepository.findAll();
+        final int actualSize = reservationsAfterAdding.size();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        assertThat(response.getBody().getId()).isNotNull();
+        assertThat(response.getBody().getDateTime()).isEqualTo(DATE_TIME);
+        assertThat(response.getBody().getScheduleId()).isEqualTo(schedule.getId());
+        assertThat(response.getBody().getServiceId()).isEqualTo(service.getId());
+        assertThat(response.getBody().getChildId()).isEqualTo(child.getId());
+        assertThat(response.getBody().isActive()).isTrue();
+
+        Reservation reservation = mapper.reservationDTOToReservation(testReservationDTO);
+        reservation.setId(response.getBody().getId());
+
+        assertThat(reservationsAfterAdding).contains(reservation);
+        assertThat(expectedSize).isEqualTo(actualSize);
+    }
 
 }

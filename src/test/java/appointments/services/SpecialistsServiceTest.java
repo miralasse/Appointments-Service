@@ -67,47 +67,6 @@ public class SpecialistsServiceTest {
         assertThat(expectedSize).isEqualTo(actualSize);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddSpecialistWithNullName() {
-        specialistsService.addSpecialist(
-                new SpecialistDTO(null, null, ROOM_NUMBER, true, organization.getId())
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddSpecialistWithEmptyName() {
-        specialistsService.addSpecialist(
-                new SpecialistDTO(null, "", ROOM_NUMBER, true, organization.getId())
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddSpecialistWithNullRoomNumber() {
-        specialistsService.addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, null, true, organization.getId())
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddSpecialistWithEmptyRoomNumber() {
-        specialistsService.addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, "", true, organization.getId())
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testAddSpecialistWithNullOrganization() {
-
-        specialistsService.addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, null, true, null)
-        );
-    }
-
     @Test
     @Transactional
     public void testEditSpecialistName() {
@@ -205,77 +164,6 @@ public class SpecialistsServiceTest {
         specialistsService.editSpecialist(
                 new SpecialistDTO(Integer.MIN_VALUE, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
         );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testEditSpecialistWithNullName() {
-
-        final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
-
-        specialistsService.editSpecialist(
-                new SpecialistDTO(id, null, ROOM_NUMBER, true, organization.getId())
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testEditSpecialistWithEmptyName() {
-
-        final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
-
-        specialistsService.editSpecialist(
-                new SpecialistDTO(id, "", ROOM_NUMBER, true, organization.getId())
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testEditSpecialistWithNullRoomNumber() {
-
-        final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
-
-        specialistsService.editSpecialist(
-                new SpecialistDTO(id, TEST_SPECIALIST_NAME, null, true, organization.getId())
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testEditSpecialistWithEmptyRoomNumber() {
-
-        final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
-
-        specialistsService.editSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, "", true, organization.getId())
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Transactional
-    public void testEditSpecialistWithNullOrganization() {
-
-        final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
-
-        specialistsService.editSpecialist(
-                new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, null)
-        );
-
     }
 
     @Test

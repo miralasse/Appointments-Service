@@ -17,11 +17,7 @@ import java.util.List;
 
 import static appointments.utils.Constants.ORGANIZATION_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_EMPTY_ID_MESSAGE;
-import static appointments.utils.Constants.SPECIALIST_EMPTY_NAME_MESSAGE;
-import static appointments.utils.Constants.SPECIALIST_EMPTY_ORGANIZATION_MESSAGE;
-import static appointments.utils.Constants.SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.toList;
 
 
@@ -59,19 +55,6 @@ public class SpecialistsService {
     /** Метод для добавления нового специалиста в справочник */
     @Transactional
     public SpecialistDTO addSpecialist(final SpecialistDTO dto) {
-
-        if (isNullOrEmpty(dto.getName())) {
-            log.error("Parameter 'name' is null");
-            throw new IllegalArgumentException(SPECIALIST_EMPTY_NAME_MESSAGE);
-        }
-        if (isNullOrEmpty(dto.getRoomNumber())) {
-            log.error("Parameter 'roomNumber' is null");
-            throw new IllegalArgumentException(SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE);
-        }
-        if (dto.getOrganizationId() == null) {
-            log.error("Parameter 'organization' is null");
-            throw new IllegalArgumentException(SPECIALIST_EMPTY_ORGANIZATION_MESSAGE);
-        }
 
         final Specialist specialist = mapper.specialistDTOToSpecialist(dto);
 
@@ -117,18 +100,6 @@ public class SpecialistsService {
         if (dto.getId() == null) {
             log.error(SPECIALIST_EMPTY_ID_MESSAGE);
             throw new IllegalArgumentException(SPECIALIST_EMPTY_ID_MESSAGE);
-        }
-        if (isNullOrEmpty(dto.getName())) {
-            log.error("Trying to set 'name' to null");
-            throw new IllegalArgumentException(SPECIALIST_EMPTY_NAME_MESSAGE);
-        }
-        if (isNullOrEmpty(dto.getRoomNumber())) {
-            log.error("Trying to set 'roomNumber' to null");
-            throw new IllegalArgumentException(SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE);
-        }
-        if (dto.getOrganizationId() == null) {
-            log.error("Trying to set 'organization' to null");
-            throw new IllegalArgumentException(SPECIALIST_EMPTY_ORGANIZATION_MESSAGE);
         }
 
         final Specialist specialist = mapper.specialistDTOToSpecialist(dto);

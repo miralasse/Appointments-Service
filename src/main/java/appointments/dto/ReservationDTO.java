@@ -23,26 +23,26 @@ public class ReservationDTO {
 
     private Long id;
 
-    /** Поле даты и времени начала приема для этого талона */
+    /** Дата и время начала приема для этого талона */
     @NotNull(message = RESERVATION_INCORRECT_DATETIME_MESSAGE)
     private LocalDateTime dateTime;
 
 
-    /** Поле Ссылка на расписание (объект Schedule), в котором осуществляется эта запись на прием */
+    /** Идентификатор расписания (объект Schedule), в котором осуществляется эта запись на прием */
     @NotNull(message = RESERVATION_EMPTY_SCHEDULE_MESSAGE)
     private Long scheduleId;
 
 
-    /** Поле Ссылка на услугу (объект Service), которая выбрана как цель обращения при бронировании времени */
+    /** Идентификатор услуги (объект Service), которая выбрана как цель обращения при бронировании времени */
     @NotNull(message = RESERVATION_EMPTY_SERVICE_MESSAGE)
     private Integer serviceId;
 
 
-    /** Поле Флаг активности */
+    /** Флаг активности */
     private boolean active;
 
 
-    /** Поле Ссылка на ребёнка (объект Child), в интересах которого осуществлена эта запись на прием */
+    /** Идентификатор ребёнка (объект Child), в интересах которого осуществляется эта запись на прием */
     @NotNull(message = RESERVATION_EMPTY_CHILD_MESSAGE)
     private Integer childId;
 

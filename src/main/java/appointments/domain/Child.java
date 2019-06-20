@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.Max;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -55,8 +56,8 @@ public class Child {
     @Column
     private Integer id;
 
-    /** Поле Серия свидетельства о рождении */
-    @NotNull(message = CHILD_NULL_SERIES_MESSAGE)
+    /** Серия свидетельства о рождении */
+    @NotEmpty(message = CHILD_NULL_SERIES_MESSAGE)
     @Size(
             min = CHILD_MIN_BIRTH_CERTIFICATE_SERIES_LENGTH,
             max = CHILD_MAX_BIRTH_CERTIFICATE_SERIES_LENGTH,
@@ -66,7 +67,7 @@ public class Child {
     private String birthCertificateSeries;
 
 
-    /** Поле Номер свидетельства о рождении */
+    /** Номер свидетельства о рождении */
     @NotNull(message = CHILD_NULL_NUMBER_MESSAGE)
     @Max(
             value = CHILD_MAX_BIRTH_CERTIFICATE_NUMBER,
@@ -76,8 +77,8 @@ public class Child {
     private Integer birthCertificateNumber;
 
 
-    /** Поле Контактный номер телефона */
-    @NotNull(message = CHILD_NULL_PHONE_MESSAGE)
+    /** Контактный номер телефона */
+    @NotEmpty(message = CHILD_NULL_PHONE_MESSAGE)
     @Pattern(
             regexp = "^((8|\\+7)[\\- ]?)?(\\(?\\d{3}\\)?[\\- ]?)?[\\d\\- ]{7,10}$",
             message = CHILD_WRONG_PHONE_MESSAGE
@@ -86,15 +87,15 @@ public class Child {
     private String phoneNumber;
 
 
-    /** Поле Электронная почта */
-    @NotNull(message = CHILD_NULL_EMAIL_MESSAGE)
+    /** Электронная почта */
+    @NotEmpty(message = CHILD_NULL_EMAIL_MESSAGE)
     @Email
     @Column
     private String email;
 
 
-    /** Поле Фамилия ребёнка */
-    @NotNull(message = CHILD_NULL_LAST_NAME_MESSAGE)
+    /** Фамилия ребёнка */
+    @NotEmpty(message = CHILD_NULL_LAST_NAME_MESSAGE)
     @Size(
             min = CHILD_MIN_NAME_LENGTH,
             max = CHILD_MAX_NAME_LENGTH,
@@ -104,8 +105,8 @@ public class Child {
     private String lastName;
 
 
-    /** Поле Имя ребёнка */
-    @NotNull(message = CHILD_NULL_FIRST_NAME_MESSAGE)
+    /** Имя ребёнка */
+    @NotEmpty(message = CHILD_NULL_FIRST_NAME_MESSAGE)
     @Size(
             min = CHILD_MIN_NAME_LENGTH,
             max = CHILD_MAX_NAME_LENGTH,
@@ -115,7 +116,7 @@ public class Child {
     private String firstName;
 
 
-    /** Поле Отчество ребёнка */
+    /** Отчество ребёнка */
     @Column
     private String patronymic;
 

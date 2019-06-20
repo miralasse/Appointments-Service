@@ -24,10 +24,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static appointments.utils.Constants.CHILD_NOT_FOUND_MESSAGE;
-import static appointments.utils.Constants.RESERVATION_EMPTY_CHILD_MESSAGE;
 import static appointments.utils.Constants.RESERVATION_EMPTY_ID_MESSAGE;
-import static appointments.utils.Constants.RESERVATION_EMPTY_SCHEDULE_MESSAGE;
-import static appointments.utils.Constants.RESERVATION_EMPTY_SERVICE_MESSAGE;
 import static appointments.utils.Constants.RESERVATION_INCORRECT_DATETIME_MESSAGE;
 import static appointments.utils.Constants.RESERVATION_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_NOT_FOUND_MESSAGE;
@@ -163,23 +160,6 @@ public class ReservationsService {
     /** Метод для добавления новой записи на прием */
     @Transactional
     public ReservationDTO addReservation(final ReservationDTO dto) {
-
-        if (dto.getScheduleId() == null) {
-            log.error("Parameter 'schedule' is null");
-            throw new IllegalArgumentException(RESERVATION_EMPTY_SCHEDULE_MESSAGE);
-        }
-        if (dto.getServiceId() == null) {
-            log.error("Parameter 'service' is null");
-            throw new IllegalArgumentException(RESERVATION_EMPTY_SERVICE_MESSAGE);
-        }
-        if (dto.getChildId() == null) {
-            log.error("Parameter 'child' is null");
-            throw new IllegalArgumentException(RESERVATION_EMPTY_CHILD_MESSAGE);
-        }
-        if (dto.getDateTime() == null) {
-            log.error("Parameter 'dateTime' is null");
-            throw new IllegalArgumentException(RESERVATION_INCORRECT_DATETIME_MESSAGE);
-        }
 
         final Reservation reservation = mapper.reservationDTOToReservation(dto);
 

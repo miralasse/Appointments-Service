@@ -8,6 +8,6 @@ import lombok.Data;
 @Data
 public class ActiveDTO {
 
-    /** Поле Флаг активности */
+    /** Флаг активности */
     private boolean active;
 }

@@ -11,8 +11,6 @@ import java.util.List;
 
 import static appointments.utils.Constants.SERVICE_EMPTY_ID_MESSAGE;
 import static appointments.utils.Constants.SERVICE_NOT_FOUND_MESSAGE;
-import static appointments.utils.Constants.SERVICE_NULL_NAME_MESSAGE;
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.toList;
 
 
@@ -37,11 +35,6 @@ public class ServicesService {
     /** Метод для добавления новой цели обращения (услуги) в справочник */
     @Transactional
     public Service addService(final String name, final boolean active) {
-
-        if (isNullOrEmpty(name)) {
-            log.error("Parameter 'name' is null");
-            throw new IllegalArgumentException(SERVICE_NULL_NAME_MESSAGE);
-        }
 
         final Service service = servicesRepository.save(new Service(null, name, active));
 

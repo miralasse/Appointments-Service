@@ -1,4 +1,4 @@
-package appointments.controllers;
+package appointments.controllers.rest_controllers;
 
 import appointments.domain.Service;
 import appointments.dto.ActiveDTO;
