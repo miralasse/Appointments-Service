@@ -19,8 +19,7 @@ public class WelcomeController {
     }
 
     @GetMapping
-    @ResponseBody
     public String welcomeAuthenticatedUser() {
-        return "Welcome authenticated user";
+        return "main";
     }
 }

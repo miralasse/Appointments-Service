@@ -27,6 +27,14 @@ apply plugin: 'checkstyle'
 apply plugin: "org.flywaydb.flyway"
 apply plugin: 'net.ltgt.apt-idea'
 
+sourceSets {
+    main {
+        resources {
+            exclude 'static/node_modules/**/*.*'
+        }
+    }
+}
+
 flyway {
     url = 'jdbc:postgresql://localhost:5432/appointments_db'
     user = 'postgres'

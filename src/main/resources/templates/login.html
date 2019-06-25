@@ -8,14 +8,14 @@
               href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
               integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
               crossorigin="anonymous">
-        <link href="../static/css/style.css" th:href="@{/css/style.css}" rel="stylesheet" />
+        <link href="../static/css/index.css" th:href="@{/css/index.css}" rel="stylesheet" />
     </head>
     <body>
         <div class="container">
 
             <h2>Вход</h2>
 
-            <form action="/login" th:object="${user}" method="POST" enctype="utf8">
+            <form action="/login" th:object="${user}" method="POST" enctype="utf8" class="signForm">
 
                 <div class="col-xs-15">
                     <div>
