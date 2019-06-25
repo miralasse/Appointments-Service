@@ -21,3 +21,7 @@ gradle-app.setting/build/
 /html/build/
 /ios/build/
 /ios-moe/build/
+
+## Node
+/src/main/resources/static/node_modules/
+/src/main/resources/static/generates/

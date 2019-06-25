@@ -1,0 +1,85 @@
+h1 {
+    margin: 30px 0 20px 0;
+}
+
+h2 {
+    margin-top: 50px;
+}
+
+h3 {
+    margin: 30px 0;
+}
+
+.signForm {
+    padding-top: 30px;
+}
+
+.form-element {
+    margin-bottom: 25px;
+}
+.error-msg {
+    color: #721c24;
+}
+
+.scheduleTable {
+    width: 100%;
+    table-layout: fixed;
+    margin: 30px 0 50px 0;
+}
+
+.scheduleTable thead th, .scheduleTable td {
+    vertical-align: middle;
+}
+
+.customDatePickerWidth,
+.customDatePickerWidth > div.react-datepicker-wrapper,
+.customDatePickerWidth > div > div.react-datepicker__input-container,
+.customDatePickerWidth > div > div.react-datepicker__input-container input {
+    width: 100%;
+}
+
+.popup-overlay {
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+}
+
+.popup-overlay:before {
+    display: block;
+    content: ' ';
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: #000;
+    opacity: 0.5;
+}
+
+.popup-content {
+    width: 70%;
+    height: 70%;
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+.popup-closer {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
