@@ -7,6 +7,7 @@ import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.domain.Specialist;
 import appointments.dto.ReservationDTO;
+import appointments.integration.utils.TestRestClient;
 import appointments.mappers.ReservationMapper;
 import appointments.repos.ChildrenRepository;
 import appointments.repos.ReservationsRepository;

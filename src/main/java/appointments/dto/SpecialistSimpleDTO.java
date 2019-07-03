@@ -8,8 +8,8 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import static appointments.utils.Constants.SPECIALIST_EMPTY_ID_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_EMPTY_NAME_MESSAGE;
-import static appointments.utils.Constants.SPECIALIST_EMPTY_ORGANIZATION_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_MAX_NAME_LENGTH;
 import static appointments.utils.Constants.SPECIALIST_MIN_NAME_LENGTH;
 import static appointments.utils.Constants.SPECIALIST_WRONG_NAME_LENGTH;
@@ -21,9 +21,9 @@ import static appointments.utils.Constants.SPECIALIST_WRONG_NAME_LENGTH;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SpecialistDTO {
+public class SpecialistSimpleDTO {
 
-    /** Индентификатор специалиста: null для нового, not null для существующего */
+    @NotNull(message = SPECIALIST_EMPTY_ID_MESSAGE)
     private Integer id;
 
 
@@ -35,14 +35,5 @@ public class SpecialistDTO {
             message = SPECIALIST_WRONG_NAME_LENGTH
     )
     private String name;
-
-
-    /** Флаг активности специалиста */
-    private boolean active;
-
-
-    /** Индентификатор организации, к которой относится специалист */
-    @NotNull(message = SPECIALIST_EMPTY_ORGANIZATION_MESSAGE)
-    private Integer organizationId;
 
 }

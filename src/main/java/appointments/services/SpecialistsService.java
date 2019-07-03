@@ -116,7 +116,6 @@ public class SpecialistsService {
                 .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE + specialist.getId()));
 
         foundSpecialist.setName(specialist.getName());
-        foundSpecialist.setRoomNumber(specialist.getRoomNumber());
         foundSpecialist.setActive(specialist.isActive());
         foundSpecialist.setOrganization(organization);
 

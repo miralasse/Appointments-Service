@@ -101,7 +101,7 @@ public class Constants {
             + SERVICE_MIN_NAME_LENGTH + " до "
             + SERVICE_MAX_NAME_LENGTH + " символов";
 
-    public static final String SERVICE_NOT_FOUND_MESSAGE = "Услуга не найдена. ID: ";
+    public static final String SERVICE_NOT_FOUND_MESSAGE = "Услуга не найдена: ";
     public static final String SERVICE_EMPTY_ID_MESSAGE = "ID услуги не должен быть пустым";
 
 
@@ -116,18 +116,10 @@ public class Constants {
             + SPECIALIST_MIN_NAME_LENGTH + " до "
             + SPECIALIST_MAX_NAME_LENGTH + " символов";
 
-    public static final int SPECIALIST_MIN_ROOM_NUMBER_LENGTH = 1;
-    public static final int SPECIALIST_MAX_ROOM_NUMBER_LENGTH = 16;
-
-    public static final String SPECIALIST_WRONG_ROOM_NUMBER_LENGTH
-            = "Длина номера кабинета должна быть от быть от "
-            + SPECIALIST_MIN_ROOM_NUMBER_LENGTH + " до "
-            + SPECIALIST_MAX_ROOM_NUMBER_LENGTH + " символов";
-
     public static final String SPECIALIST_EMPTY_ID_MESSAGE = "ID специалиста не должен быть пустым";
-    public static final String SPECIALIST_NOT_FOUND_MESSAGE = "Специалист не найден. ID: ";
+    public static final String SPECIALIST_NOT_FOUND_MESSAGE = "Специалист не найден: ";
     public static final String SPECIALIST_EMPTY_NAME_MESSAGE = "Должность/ФИО специалиста должно быть указано";
-    public static final String SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE = "Номер кабинета не должен быть пустым";
+
 
     public static final String SPECIALIST_EMPTY_ORGANIZATION_MESSAGE
             = "Должна быть указана организация, к которой относится специалист";
@@ -143,6 +135,16 @@ public class Constants {
             = "Интервал приема должен быть от "
             + SCHEDULE_MIN_INTERVAL_LENGTH + " до "
             + SCHEDULE_MAX_INTERVAL_LENGTH + " минут";
+
+    public static final int SCHEDULE_MIN_ROOM_NUMBER_LENGTH = 1;
+    public static final int SCHEDULE_MAX_ROOM_NUMBER_LENGTH = 16;
+
+    public static final String SCHEDULE_WRONG_ROOM_NUMBER_LENGTH
+            = "Длина номера кабинета должна быть от быть от "
+            + SCHEDULE_MIN_ROOM_NUMBER_LENGTH + " до "
+            + SCHEDULE_MAX_ROOM_NUMBER_LENGTH + " символов";
+
+    public static final String SCHEDULE_EMPTY_ROOM_NUMBER_MESSAGE = "Номер кабинета не должен быть пустым";
 
     public static final String SCHEDULE_EMPTY_ID_MESSAGE = "ID расписания не должен быть пустым";
     public static final String SCHEDULE_NOT_FOUND_MESSAGE = "Расписание не найдено. ID: ";

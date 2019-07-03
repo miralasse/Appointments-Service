@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
-      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+      lang="ru">
     <head>
         <meta charset="utf-8">
         <title>Регистрация</title>
@@ -38,7 +39,7 @@
                     </div>
                 </div>
 
-                <div>
+                <div th:unless="${userRegistered != null}">
                     <div class="form-element" >
                         <input type="text" th:field="*{username}" placeholder="Логин" class="col-lg-3"/>
                         <p class="error-msg" th:each="error: ${#fields.errors('username')}"

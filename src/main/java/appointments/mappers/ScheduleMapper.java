@@ -2,17 +2,15 @@ package appointments.mappers;
 
 import appointments.domain.Reservation;
 import appointments.domain.Schedule;
-import appointments.domain.Service;
 import appointments.dto.ScheduleDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
+import org.springframework.data.domain.Page;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static appointments.utils.Constants.RESERVATION_EMPTY_SERVICE_MESSAGE;
-import static appointments.utils.Constants.SCHEDULE_EMPTY_SERVICES_MESSAGE;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -22,51 +20,27 @@ import static java.util.stream.Collectors.toList;
 public interface ScheduleMapper {
 
     @Mappings({
-            @Mapping(source = "specialist.id", target = "specialistId"),
-            @Mapping(source = "services", target = "serviceIds"),
-            @Mapping(source = "reservations", target = "reservationIds")
+            @Mapping(source = "reservations", target = "reservationIds"),
+            @Mapping(source = "intervalOfReception", target = "interval")
     })
     ScheduleDTO scheduleToScheduleDto(Schedule entity);
 
 
     @Mappings({
-            @Mapping(source = "specialistId", target = "specialist.id"),
-            @Mapping(source = "serviceIds", target = "services"),
-            @Mapping(source = "reservationIds", target = "reservations")
+            @Mapping(source = "reservationIds", target = "reservations"),
+            @Mapping(source = "interval", target = "intervalOfReception")
     })
     Schedule scheduleDTOToSchedule(ScheduleDTO dto);
 
+
+    default Page<ScheduleDTO> schedulePageToScheduleDTOPage(Page<Schedule> page) {
+        return page.map(this::scheduleToScheduleDto);
+    }
 
     List<Schedule> scheduleDTOListToScheduleList(List<ScheduleDTO> list);
 
 
     List<ScheduleDTO> scheduleListToScheduleDTOList(List<Schedule> list);
-
-
-    default List<Integer> servicesToIds(List<Service> services) {
-
-        if (services == null) {
-            throw new IllegalArgumentException(RESERVATION_EMPTY_SERVICE_MESSAGE);
-        }
-
-        return services
-                .stream()
-                .map(Service::getId)
-                .collect(toList());
-    }
-
-
-    default List<Service> idsToServices(List<Integer> serviceIds) {
-
-        if (serviceIds == null) {
-            throw new IllegalArgumentException(SCHEDULE_EMPTY_SERVICES_MESSAGE);
-        }
-
-        return serviceIds
-                .stream()
-                .map(id -> new Service(id, null, false))
-                .collect(toList());
-    }
 
 
     default List<Long> reservationsToIds(List<Reservation> reservations) {

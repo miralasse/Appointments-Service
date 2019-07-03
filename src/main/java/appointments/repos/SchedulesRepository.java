@@ -2,6 +2,8 @@ package appointments.repos;
 
 import appointments.domain.Schedule;
 import appointments.domain.Specialist;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,5 +19,6 @@ import java.util.Optional;
 @Repository
 public interface SchedulesRepository extends JpaRepository<Schedule, Long> {
 
+    Page<Schedule> findAllByDateOrderByStartTime(Pageable pageable, LocalDate date);
     Optional<Schedule> findOneBySpecialistAndDate(Specialist specialist, LocalDate date);
 }

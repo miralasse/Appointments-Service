@@ -1,14 +1,15 @@
 import React from 'react';
-import ReactDOM from 'react-dom'
+import ReactDOM from 'react-dom';
 
 
-export class Popup extends React.Component {
+export class FormPopup extends React.Component {
 
     constructor(props) {
+
         super(props);
         this.state = {
             popup: false
-        }
+        };
     }
 
     render() {
@@ -46,4 +47,4 @@ export class Popup extends React.Component {
     }
 }
 
-export default Popup
+export default FormPopup;

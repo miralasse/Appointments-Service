@@ -2,6 +2,7 @@ package appointments.services;
 
 import appointments.domain.Schedule;
 import appointments.dto.ScheduleDTO;
+import appointments.dto.ServiceSimpleDTO;
 import appointments.exceptions.ScheduleNotFoundException;
 import appointments.exceptions.ServiceNotFoundException;
 import appointments.exceptions.SpecialistNotFoundException;
@@ -11,11 +12,12 @@ import appointments.repos.ServicesRepository;
 import appointments.repos.SpecialistsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 
 import static appointments.utils.Constants.SCHEDULE_EMPTY_ID_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_INCORRECT_DATE_MESSAGE;
@@ -73,15 +75,16 @@ public class SchedulesService {
         schedule.setId(null);
         schedule.setSpecialist(
                 specialistsRepository
-                        .findById(dto.getSpecialistId())
+                        .findById(dto.getSpecialist().getId())
                         .orElseThrow(() -> new SpecialistNotFoundException(
-                                SPECIALIST_NOT_FOUND_MESSAGE + dto.getSpecialistId()
+                                        SPECIALIST_NOT_FOUND_MESSAGE + dto.getSpecialist().getId()
                                 )
                         )
         );
         schedule.setServices(
-                dto.getServiceIds()
+                dto.getServices()
                         .stream()
+                        .map(ServiceSimpleDTO::getId)
                         .map(id -> servicesRepository
                                 .findById(id)
                                 .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id)))
@@ -94,6 +97,7 @@ public class SchedulesService {
         log.info("Added new schedule: {}", savedSchedule);
 
         return mapper.scheduleToScheduleDto(savedSchedule);
+
     }
 
     /** Метод для удаления расписания по идентификатору */
@@ -133,25 +137,12 @@ public class SchedulesService {
 
     /** Метод для получения списка расписаний */
     @Transactional(readOnly = true)
-    public List<ScheduleDTO> getSchedules() {
+    public Page<ScheduleDTO> getSchedules(Pageable pageable, LocalDate date) {
 
         log.debug("Getting list of all schedules");
 
-        return mapper.scheduleListToScheduleDTOList(schedulesRepository.findAll());
-    }
-
-    /** Метод для получения списка только активных расписаний */
-    @Transactional(readOnly = true)
-    public List<ScheduleDTO> getActiveSchedules() {
-
-        log.debug("Getting list of active schedules");
-
-        return mapper.scheduleListToScheduleDTOList(
-                schedulesRepository
-                        .findAll()
-                        .stream()
-                        .filter(Schedule::isActive)
-                        .collect(toList())
+        return mapper.schedulePageToScheduleDTOPage(
+                schedulesRepository.findAllByDateOrderByStartTime(pageable, date)
         );
     }
 }

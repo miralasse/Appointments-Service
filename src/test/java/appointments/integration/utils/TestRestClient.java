@@ -1,4 +1,4 @@
-package appointments.integration;
+package appointments.integration.utils;
 
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
@@ -70,6 +70,18 @@ public class TestRestClient {
 
         return restTemplate.exchange(restPath, HttpMethod.GET, requestEntity, responseType, urlVariables);
     }
+
+    /** Метод для отправки GET-запроса с указанными параметрами, возвращающий страницу в теле ответа */
+    public <T> ResponseEntity<RestPageImpl<T>> getPage(
+            String restPath, String jSessionId,
+            ParameterizedTypeReference<RestPageImpl<T>> responseType, Object... urlVariables
+    ) {
+
+        HttpEntity<?> requestEntity = new HttpEntity<>(getHeadersWithCookie(jSessionId));
+
+        return restTemplate.exchange(restPath, HttpMethod.GET, requestEntity, responseType, urlVariables);
+    }
+
 
     /** Служебный метод для установки идентификатора сессии в заголовки запроса */
     private HttpHeaders getHeadersWithCookie(String jSessionId) {

@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.validator.constraints.Range;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -19,7 +20,9 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -33,6 +36,10 @@ import static appointments.utils.Constants.SCHEDULE_INCORRECT_DATE_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_MAX_INTERVAL_LENGTH;
 import static appointments.utils.Constants.SCHEDULE_MIN_INTERVAL_LENGTH;
 import static appointments.utils.Constants.SCHEDULE_WRONG_INTERVAL_LENGTH;
+import static appointments.utils.Constants.SCHEDULE_EMPTY_ROOM_NUMBER_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_MAX_ROOM_NUMBER_LENGTH;
+import static appointments.utils.Constants.SCHEDULE_MIN_ROOM_NUMBER_LENGTH;
+import static appointments.utils.Constants.SCHEDULE_WRONG_ROOM_NUMBER_LENGTH;
 
 
 /**
@@ -71,6 +78,16 @@ public class Schedule {
     @ManyToOne
     @JoinColumn(name = "specialist_id")
     private Specialist specialist;
+
+    /** Номер кабинета */
+    @NotEmpty(message = SCHEDULE_EMPTY_ROOM_NUMBER_MESSAGE)
+    @Size(
+            min = SCHEDULE_MIN_ROOM_NUMBER_LENGTH,
+            max = SCHEDULE_MAX_ROOM_NUMBER_LENGTH,
+            message = SCHEDULE_WRONG_ROOM_NUMBER_LENGTH
+    )
+    @Column(name = "room_number")
+    private String roomNumber;
 
 
     /** Дата, на которую формируется это расписание */
@@ -115,12 +132,7 @@ public class Schedule {
 
 
     /** Список забронированных интервалов времени (ссылки на объекты Reservation) в этом расписании */
-    @OneToMany(mappedBy = "schedule")
+    @OneToMany(mappedBy = "schedule", cascade = CascadeType.REMOVE)
     private List<Reservation> reservations;
-
-
-    /** Флаг активности этого расписания */
-    @Column
-    private boolean active;
 
 }
