@@ -6,6 +6,10 @@ import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.domain.Specialist;
 import appointments.dto.ScheduleDTO;
+import appointments.dto.ServiceSimpleDTO;
+import appointments.dto.SpecialistSimpleDTO;
+import appointments.integration.utils.RestPageImpl;
+import appointments.integration.utils.TestRestClient;
 import appointments.mappers.ScheduleMapper;
 import appointments.repos.SchedulesRepository;
 import appointments.repos.ServicesRepository;
@@ -18,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,13 +39,14 @@ import java.util.List;
 
 import static appointments.utils.Constants.SCHEDULE_EMPTY_END_TIME_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_INTERVAL_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_EMPTY_ROOM_NUMBER_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_SERVICES_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_SPECIALIST_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_START_TIME_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_INCORRECT_DATE_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_WRONG_INTERVAL_LENGTH;
-import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_WRONG_ROOM_NUMBER_LENGTH;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,17 +59,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class SchedulesControllerIntegrationTest {
 
-    private static final LocalDate DATE = LocalDate.of(2019, Month.AUGUST, 1);
+    private static final int YEAR = 2019;
+    private static final LocalDate DATE = LocalDate.of(YEAR, Month.AUGUST, 1);
+    private static final LocalDate ANOTHER_DATE = LocalDate.of(YEAR, Month.AUGUST, 15);
     private static final LocalTime START_TIME = LocalTime.of(9, 0);
     private static final LocalTime END_TIME = LocalTime.of(13, 0);
     private static final Integer INTERVAL = 15;
     private static final ArrayList<Reservation> RESERVATIONS = new ArrayList<>();
     private static final ArrayList<Long> RESERVATION_IDS = new ArrayList<>();
     private static final String SPECIALIST_NAME = "Специалист 1";
+    private static final String ROOM_NUMBER = "25";
+    private static final int PAGE_SIZE = 5;
+    private static final int INITIAL_PAGE = 0;
+    private static final PageRequest PAGE_REQUEST = PageRequest.of(INITIAL_PAGE, PAGE_SIZE);
 
     private Specialist specialist;
     private List<Service> services;
-    private List<Integer> serviceIds;
+    private SpecialistSimpleDTO specialistSimpleDTO;
+    private List<ServiceSimpleDTO> serviceSimpleDTOs;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -95,19 +109,14 @@ public class SchedulesControllerIntegrationTest {
     @Before
     public void setUp() {
 
-        testHelper.clearAll();
-        testHelper.initRoles();
-        testHelper.initUsers();
-        testHelper.initOrganizations();
-        testHelper.initSpecialists();
-        testHelper.initServices();
-        testHelper.initSchedules();
+        testHelper.refill();
         specialist = specialistsRepository.findOneByName(SPECIALIST_NAME).orElse(null);
+        specialistSimpleDTO = new SpecialistSimpleDTO(specialist.getId(), specialist.getName());
         services = servicesRepository.findAll();
-        serviceIds = services
-            .stream()
-            .map(Service::getId)
-            .collect(toList());
+        serviceSimpleDTOs = services
+                .stream()
+                .map(service -> new ServiceSimpleDTO(service.getId(), service.getName()))
+                .collect(toList());
         restClient = new TestRestClient(restTemplate);
         jSessionId = testHelper.loginAsAdmin(restClient);
     }
@@ -116,89 +125,76 @@ public class SchedulesControllerIntegrationTest {
     @Transactional
     public void testGetAllSchedules() {
 
-        final ResponseEntity<List<ScheduleDTO>> response = restClient.getList(
-            endpoint,
-            jSessionId,
-            new ParameterizedTypeReference<List<ScheduleDTO>>() { }
+        String url = endpoint + "?date={date}&page={page}&size={size}";
+
+        final ResponseEntity<RestPageImpl<ScheduleDTO>> response = restClient.getPage(
+                url,
+                jSessionId,
+                new ParameterizedTypeReference<RestPageImpl<ScheduleDTO>>() { },
+                ANOTHER_DATE,
+                INITIAL_PAGE,
+                PAGE_SIZE
         );
 
-        System.out.println(response);
+        final Page<ScheduleDTO> scheduleDTOs = response.getBody();
 
-        final List<ScheduleDTO> scheduleDTOs = response.getBody();
+        assertThat(scheduleDTOs.getTotalElements()).isEqualTo(
+                schedulesRepository
+                        .findAllByDateOrderByStartTime(PAGE_REQUEST, ANOTHER_DATE)
+                        .getTotalElements()
+                );
 
-        assertThat(scheduleDTOs).hasSize(schedulesRepository.findAll().size());
+        assertThat(scheduleDTOs.getContent())
+                .anySatisfy(
+                        s -> assertThat(s.getSpecialist().getName()).isEqualTo(
+                                specialistsRepository
+                                        .findOneByName(TestHelper.SPECIALIST_NAME_SECOND)
+                                        .get()
+                                        .getName()
+                        )
+                );
 
-        final List<Schedule> schedules = mapper.scheduleDTOListToScheduleList(scheduleDTOs);
+        assertThat(scheduleDTOs.getContent())
+                .anySatisfy(s -> assertThat(s.getDate()).isEqualTo(TestHelper.AUGUST_FIFTEEN));
 
-        assertThat(schedules)
-            .anySatisfy(s -> assertThat(s.getSpecialist())
-                .isEqualTo(specialistsRepository.findOneByName(TestHelper.SPECIALIST_NAME_FIRST).get()));
-
-        assertThat(schedules)
-            .anySatisfy(s -> assertThat(s.getSpecialist())
-                .isEqualTo(specialistsRepository.findOneByName(TestHelper.SPECIALIST_NAME_SECOND).get()));
-
-        assertThat(schedules).anySatisfy(s -> assertThat(s.getDate()).isEqualTo(TestHelper.JULY_TWELVE));
-        assertThat(schedules).anySatisfy(s -> assertThat(s.getDate()).isEqualTo(TestHelper.JULY_FIFTEEN));
-        assertThat(schedules).anySatisfy(s -> assertThat(s.getDate()).isEqualTo(TestHelper.AUGUST_TWELVE));
-        assertThat(schedules).anySatisfy(s -> assertThat(s.getDate()).isEqualTo(TestHelper.AUGUST_FIFTEEN));
-    }
-
-    @Test
-    @Transactional
-    public void testGetActiveSchedules() {
-
-        final String url = endpoint + "active";
-
-        final ResponseEntity<List<ScheduleDTO>> response = restTemplate.exchange(
-            url,
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<List<ScheduleDTO>>() { }
-        );
-
-        final List<ScheduleDTO> scheduleDTOs = response.getBody();
-
-        assertThat(scheduleDTOs).allSatisfy(ScheduleDTO::isActive);
     }
 
     @Test
     public void testGetScheduleById() {
 
         final long id = schedulesService
-            .addSchedule(
-                new ScheduleDTO(
-                    null,
-                    specialist.getId(),
-                    DATE,
-                    serviceIds,
-                    START_TIME,
-                    END_TIME,
-                    INTERVAL,
-                    RESERVATION_IDS,
-                    true
-                )
-            ).getId();
+                .addSchedule(
+                        new ScheduleDTO(
+                                null,
+                                specialistSimpleDTO,
+                                ROOM_NUMBER,
+                                DATE,
+                                serviceSimpleDTOs,
+                                START_TIME,
+                                END_TIME,
+                                INTERVAL,
+                                RESERVATION_IDS
+                        )
+                ).getId();
 
         final ResponseEntity<ScheduleDTO> response = restClient.exchange(
-            endpointWithId,
-            jSessionId,
-            HttpMethod.GET,
-            ScheduleDTO.class,
-            id
+                endpointWithId,
+                jSessionId,
+                HttpMethod.GET,
+                ScheduleDTO.class,
+                id
         );
 
         final ScheduleDTO actualScheduleDTO = response.getBody();
 
         assertThat(actualScheduleDTO.getId()).isEqualTo(id);
-        assertThat(actualScheduleDTO.getSpecialistId()).isEqualTo(specialist.getId());
+        assertThat(actualScheduleDTO.getSpecialist()).isEqualTo(specialistSimpleDTO);
         assertThat(actualScheduleDTO.getDate()).isEqualTo(DATE);
-        assertThat(actualScheduleDTO.getServiceIds()).isEqualTo(serviceIds);
+        assertThat(actualScheduleDTO.getServices()).isEqualTo(serviceSimpleDTOs);
         assertThat(actualScheduleDTO.getStartTime()).isEqualTo(START_TIME);
         assertThat(actualScheduleDTO.getEndTime()).isEqualTo(END_TIME);
-        assertThat(actualScheduleDTO.getIntervalOfReception()).isEqualTo(INTERVAL);
+        assertThat(actualScheduleDTO.getInterval()).isEqualTo(INTERVAL);
         assertThat(actualScheduleDTO.getReservationIds()).isEqualTo(RESERVATION_IDS);
-        assertThat(actualScheduleDTO.isActive()).isEqualTo(true);
     }
 
 
@@ -209,11 +205,11 @@ public class SchedulesControllerIntegrationTest {
         final int id = Integer.MIN_VALUE;
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpointWithId,
-            jSessionId,
-            HttpMethod.GET,
-            String.class,
-            id
+                endpointWithId,
+                jSessionId,
+                HttpMethod.GET,
+                String.class,
+                id
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -225,22 +221,31 @@ public class SchedulesControllerIntegrationTest {
     public void testDeleteScheduleById() {
 
         final long id = schedulesService
-            .addSchedule(
-                new ScheduleDTO(
-                    null,
-                    specialist.getId(),
-                    DATE,
-                    serviceIds,
-                    START_TIME,
-                    END_TIME,
-                    INTERVAL,
-                    RESERVATION_IDS,
-                    true
-                )
-            ).getId();
+                .addSchedule(
+                        new ScheduleDTO(
+                                null,
+                                specialistSimpleDTO,
+                                ROOM_NUMBER,
+                                DATE,
+                                serviceSimpleDTOs,
+                                START_TIME,
+                                END_TIME,
+                                INTERVAL,
+                                RESERVATION_IDS
+                        )
+                ).getId();
 
-        final Schedule testSchedule
-            = new Schedule(id, specialist, DATE, services, START_TIME, END_TIME, INTERVAL, RESERVATIONS, true);
+        final Schedule testSchedule = new Schedule(
+                id,
+                specialist,
+                ROOM_NUMBER,
+                DATE,
+                services,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                RESERVATIONS
+        );
 
         final List<Schedule> schedulesBeforeRemoving = schedulesRepository.findAll();
         final int expectedSize = schedulesBeforeRemoving.size() - 1;
@@ -248,11 +253,11 @@ public class SchedulesControllerIntegrationTest {
         assertThat(schedulesBeforeRemoving).contains(testSchedule);
 
         final ResponseEntity<String> deleteResponse = restClient.exchange(
-            endpointWithId,
-            jSessionId,
-            HttpMethod.DELETE,
-            String.class,
-            id
+                endpointWithId,
+                jSessionId,
+                HttpMethod.DELETE,
+                String.class,
+                id
         );
 
         assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
@@ -271,11 +276,11 @@ public class SchedulesControllerIntegrationTest {
         final int id = Integer.MIN_VALUE;
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpointWithId,
-            jSessionId,
-            HttpMethod.DELETE,
-            String.class,
-            id
+                endpointWithId,
+                jSessionId,
+                HttpMethod.DELETE,
+                String.class,
+                id
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -290,23 +295,23 @@ public class SchedulesControllerIntegrationTest {
         final int expectedSize = schedulesBeforeAdding.size() + 1;
 
         final ScheduleDTO testScheduleDTO = new ScheduleDTO(
-            null,
-            specialist.getId(),
-            DATE,
-            serviceIds,
-            START_TIME,
-            END_TIME,
-            INTERVAL,
-            RESERVATION_IDS,
-            true
+                null,
+                specialistSimpleDTO,
+                ROOM_NUMBER,
+                DATE,
+                serviceSimpleDTOs,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                RESERVATION_IDS
         );
 
         final ResponseEntity<ScheduleDTO> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            ScheduleDTO.class
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                ScheduleDTO.class
         );
 
         final List<Schedule> schedulesAfterAdding = schedulesRepository.findAll();
@@ -315,14 +320,13 @@ public class SchedulesControllerIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
         assertThat(response.getBody().getId()).isNotNull();
-        assertThat(response.getBody().getSpecialistId()).isEqualTo(specialist.getId());
+        assertThat(response.getBody().getSpecialist()).isEqualTo(specialistSimpleDTO);
         assertThat(response.getBody().getDate()).isEqualTo(DATE);
-        assertThat(response.getBody().getServiceIds()).isEqualTo(serviceIds);
+        assertThat(response.getBody().getServices()).isEqualTo(serviceSimpleDTOs);
         assertThat(response.getBody().getStartTime()).isEqualTo(START_TIME);
         assertThat(response.getBody().getEndTime()).isEqualTo(END_TIME);
-        assertThat(response.getBody().getIntervalOfReception()).isEqualTo(INTERVAL);
+        assertThat(response.getBody().getInterval()).isEqualTo(INTERVAL);
         assertThat(response.getBody().getReservationIds()).isEqualTo(RESERVATION_IDS);
-        assertThat(response.getBody().isActive()).isTrue();
 
         final Schedule schedule = mapper.scheduleDTOToSchedule(testScheduleDTO);
         schedule.setId(response.getBody().getId());
@@ -338,23 +342,23 @@ public class SchedulesControllerIntegrationTest {
         final int wrongInterval = 2;
 
         final ScheduleDTO testScheduleDTO = new ScheduleDTO(
-            null,
-            specialist.getId(),
-            DATE,
-            serviceIds,
-            START_TIME,
-            END_TIME,
-            wrongInterval,
-            RESERVATION_IDS,
-            true
+                null,
+                specialistSimpleDTO,
+                ROOM_NUMBER,
+                DATE,
+                serviceSimpleDTOs,
+                START_TIME,
+                END_TIME,
+                wrongInterval,
+                RESERVATION_IDS
         );
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            String.class
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -366,51 +370,111 @@ public class SchedulesControllerIntegrationTest {
     public void testPostScheduleWithNullInterval() {
 
         final ScheduleDTO testScheduleDTO = new ScheduleDTO(
-            null,
-            specialist.getId(),
-            DATE,
-            serviceIds,
-            START_TIME,
-            END_TIME,
-            null,
-            RESERVATION_IDS,
-            true
+                null,
+                specialistSimpleDTO,
+                ROOM_NUMBER,
+                DATE,
+                serviceSimpleDTOs,
+                START_TIME,
+                END_TIME,
+                null,
+                RESERVATION_IDS
         );
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            String.class
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains(SCHEDULE_EMPTY_INTERVAL_MESSAGE);
     }
 
+
+    @Test
+    @Transactional
+    public void testPostScheduleWithWrongRoomNumber() {
+
+        final String tooLongRoomNumber = "1234567891123456789";
+
+        final ScheduleDTO testScheduleDTO = new ScheduleDTO(
+                null,
+                specialistSimpleDTO,
+                tooLongRoomNumber,
+                DATE,
+                serviceSimpleDTOs,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                RESERVATION_IDS
+        );
+
+        final ResponseEntity<String> response = restClient.exchange(
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains(SCHEDULE_WRONG_ROOM_NUMBER_LENGTH);
+    }
+
+    @Test
+    @Transactional
+    public void testPostScheduleWithNullRoomNumber() {
+
+        final ScheduleDTO testScheduleDTO = new ScheduleDTO(
+                null,
+                specialistSimpleDTO,
+                null,
+                DATE,
+                serviceSimpleDTOs,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                RESERVATION_IDS
+        );
+
+        final ResponseEntity<String> response = restClient.exchange(
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains(SCHEDULE_EMPTY_ROOM_NUMBER_MESSAGE);
+    }
+
+
     @Test
     @Transactional
     public void testPostScheduleWithNullSpecialist() {
 
         final ScheduleDTO testScheduleDTO = new ScheduleDTO(
-            null,
-            null,
-            DATE,
-            serviceIds,
-            START_TIME,
-            END_TIME,
-            INTERVAL,
-            RESERVATION_IDS,
-            true
+                null,
+                null,
+                ROOM_NUMBER,
+                DATE,
+                serviceSimpleDTOs,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                RESERVATION_IDS
         );
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            String.class
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -419,49 +483,28 @@ public class SchedulesControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithWrongSpecialist() {
-
-        final int wrongId = Integer.MIN_VALUE;
-
-        final ScheduleDTO testScheduleDTO = new ScheduleDTO(
-            null,
-            wrongId,
-            DATE,
-            serviceIds,
-            START_TIME,
-            END_TIME,
-            INTERVAL,
-            RESERVATION_IDS,
-            true
-        );
-
-        final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(response.getBody()).contains(SPECIALIST_NOT_FOUND_MESSAGE + wrongId);
-    }
-
-    @Test
-    @Transactional
     public void testPostScheduleWithNullDate() {
 
-        final Schedule testSchedule
-            = new Schedule(null, specialist, null, services, START_TIME, END_TIME, INTERVAL, RESERVATIONS, true);
+        final Schedule testSchedule = new Schedule(
+                null,
+                specialist,
+                ROOM_NUMBER,
+                null,
+                services,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                RESERVATIONS
+        );
 
         final ScheduleDTO testScheduleDTO = mapper.scheduleToScheduleDto(testSchedule);
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            String.class
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -473,23 +516,23 @@ public class SchedulesControllerIntegrationTest {
     public void testPostScheduleWithNullServices() {
 
         final ScheduleDTO testScheduleDTO = new ScheduleDTO(
-            null,
-            specialist.getId(),
-            DATE,
-            null,
-            START_TIME,
-            END_TIME,
-            INTERVAL,
-            RESERVATION_IDS,
-            true
+                null,
+                specialistSimpleDTO,
+                ROOM_NUMBER,
+                DATE,
+                null,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                RESERVATION_IDS
         );
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            String.class
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -500,17 +543,26 @@ public class SchedulesControllerIntegrationTest {
     @Transactional
     public void testPostScheduleWithNullStartDate() {
 
-        final Schedule testSchedule
-            = new Schedule(null, specialist, DATE, services, null, END_TIME, INTERVAL, RESERVATIONS, true);
+        final Schedule testSchedule = new Schedule(
+                null,
+                specialist,
+                ROOM_NUMBER,
+                DATE,
+                services,
+                null,
+                END_TIME,
+                INTERVAL,
+                RESERVATIONS
+        );
 
         final ScheduleDTO testScheduleDTO = mapper.scheduleToScheduleDto(testSchedule);
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            String.class
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -521,17 +573,26 @@ public class SchedulesControllerIntegrationTest {
     @Transactional
     public void testPostScheduleWithNullEndDate() {
 
-        final Schedule testSchedule
-            = new Schedule(null, specialist, DATE, services, START_TIME, null, INTERVAL, RESERVATIONS, true);
+        final Schedule testSchedule = new Schedule(
+                null,
+                specialist,
+                ROOM_NUMBER,
+                DATE,
+                services,
+                START_TIME,
+                null,
+                INTERVAL,
+                RESERVATIONS
+        );
 
         final ScheduleDTO testScheduleDTO = mapper.scheduleToScheduleDto(testSchedule);
 
         final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testScheduleDTO,
-            String.class
+                endpoint,
+                jSessionId,
+                HttpMethod.POST,
+                testScheduleDTO,
+                String.class
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);

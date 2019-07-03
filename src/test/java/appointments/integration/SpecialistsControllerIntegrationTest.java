@@ -5,6 +5,7 @@ import appointments.domain.Organization;
 import appointments.domain.Specialist;
 import appointments.dto.ActiveDTO;
 import appointments.dto.SpecialistDTO;
+import appointments.integration.utils.TestRestClient;
 import appointments.mappers.SpecialistMapper;
 import appointments.repos.OrganizationsRepository;
 import appointments.repos.SpecialistsRepository;
@@ -27,10 +28,8 @@ import java.util.List;
 import static appointments.utils.Constants.ORGANIZATION_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_EMPTY_NAME_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_EMPTY_ORGANIZATION_MESSAGE;
-import static appointments.utils.Constants.SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_WRONG_NAME_LENGTH;
-import static appointments.utils.Constants.SPECIALIST_WRONG_ROOM_NUMBER_LENGTH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -43,7 +42,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SpecialistsControllerIntegrationTest {
 
     private static final String TEST_SPECIALIST_NAME = "Иванова Ольга Викторовна";
-    private static final String ROOM_NUMBER = "25";
     private final static String ORGANIZATION_NAME = "Управление образования г. Белгород";
 
     private Organization organization;
@@ -77,12 +75,7 @@ public class SpecialistsControllerIntegrationTest {
     @Before
     public void setUp() {
 
-        testHelper.clearAll();
-        testHelper.initRoles();
-        testHelper.initUsers();
-        testHelper.initServices();
-        testHelper.initOrganizations();
-        testHelper.initSpecialists();
+        testHelper.refill();
         organization = organizationsRepository.findOneByName(ORGANIZATION_NAME).orElse(null);
         restClient = new TestRestClient(restTemplate);
         jSessionId = testHelper.loginAsAdmin(restClient);
@@ -133,7 +126,7 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = specialistsService
             .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
             ).getId();
 
 
@@ -149,7 +142,6 @@ public class SpecialistsControllerIntegrationTest {
 
         assertThat(actualSpecialistDTO.getId()).isEqualTo(id);
         assertThat(actualSpecialistDTO.getName()).isEqualTo(TEST_SPECIALIST_NAME);
-        assertThat(actualSpecialistDTO.getRoomNumber()).isEqualTo(ROOM_NUMBER);
         assertThat(actualSpecialistDTO.getOrganizationId()).isEqualTo(organization.getId());
         assertThat(actualSpecialistDTO.isActive()).isEqualTo(true);
     }
@@ -176,12 +168,12 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = specialistsService
             .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
             )
             .getId();
 
         final Specialist testSpecialist
-            = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization);
+            = new Specialist(id, TEST_SPECIALIST_NAME, true, organization);
 
         final List<Specialist> specialistsBeforeRemoving = specialistsRepository.findAll();
         final int expectedSize = specialistsBeforeRemoving.size() - 1;
@@ -229,7 +221,7 @@ public class SpecialistsControllerIntegrationTest {
         final int expectedSize = specialistsBeforeAdding.size() + 1;
 
         final SpecialistDTO testSpecialistDTO
-            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
+            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId());
 
         final ResponseEntity<SpecialistDTO> response = restClient.exchange(
             endpoint,
@@ -245,7 +237,6 @@ public class SpecialistsControllerIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().getId()).isNotNull();
         assertThat(response.getBody().getName()).isEqualTo(TEST_SPECIALIST_NAME);
-        assertThat(response.getBody().getRoomNumber()).isEqualTo(ROOM_NUMBER);
         assertThat(response.getBody().isActive()).isTrue();
         assertThat(response.getBody().getOrganizationId()).isEqualTo(organization.getId());
 
@@ -260,7 +251,7 @@ public class SpecialistsControllerIntegrationTest {
     public void testPostSpecialistWithWrongName() {
 
         final SpecialistDTO testSpecialistDTO
-            = new SpecialistDTO(null, "a", ROOM_NUMBER, true, organization.getId());
+            = new SpecialistDTO(null, "a", true, organization.getId());
 
         final ResponseEntity<String> response = restClient.exchange(
             endpoint,
@@ -278,7 +269,7 @@ public class SpecialistsControllerIntegrationTest {
     public void testPostSpecialistWithNullName() {
 
         final SpecialistDTO testSpecialistDTO
-            = new SpecialistDTO(null, null, ROOM_NUMBER, true, organization.getId());
+            = new SpecialistDTO(null, null, true, organization.getId());
 
         final ResponseEntity<String> response = restClient.exchange(
             endpoint,
@@ -293,32 +284,12 @@ public class SpecialistsControllerIntegrationTest {
     }
 
     @Test
-    public void testPostSpecialistWithWrongRoomNumber() {
-
-        final String tooLongRoomNumber = "1234567891123456789";
-
-        final SpecialistDTO testSpecialistDTO
-            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, tooLongRoomNumber, true, organization.getId());
-
-        final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testSpecialistDTO,
-            String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains(SPECIALIST_WRONG_ROOM_NUMBER_LENGTH);
-    }
-
-    @Test
     public void testPostSpecialistWithWrongOrganization() {
 
         int wrongId = Integer.MIN_VALUE;
 
         final SpecialistDTO testSpecialistDTO
-            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, wrongId);
+            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, wrongId);
 
         final ResponseEntity<String> response = restClient.exchange(
             endpoint,
@@ -333,28 +304,10 @@ public class SpecialistsControllerIntegrationTest {
     }
 
     @Test
-    public void testPostSpecialistWithNullRoomNumber() {
-
-        final SpecialistDTO testSpecialistDTO
-            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, null, true, organization.getId());
-
-        final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.POST,
-            testSpecialistDTO,
-            String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains(SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE);
-    }
-
-    @Test
     public void testPostSpecialistWithNullOrganization() {
 
         final SpecialistDTO testSpecialistDTO
-            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, null);
+            = new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, null);
 
         final ResponseEntity<String> response = restClient.exchange(
             endpoint,
@@ -373,7 +326,7 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = specialistsService
             .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
             ).getId();
 
         final List<Specialist> specialistsBeforeUpdating = specialistsRepository.findAll();
@@ -384,7 +337,7 @@ public class SpecialistsControllerIntegrationTest {
             endpoint,
             jSessionId,
             HttpMethod.PUT,
-            new SpecialistDTO(id, changedName, ROOM_NUMBER, true, organization.getId()),
+            new SpecialistDTO(id, changedName, true, organization.getId()),
             SpecialistDTO.class
         );
 
@@ -396,7 +349,6 @@ public class SpecialistsControllerIntegrationTest {
         final Specialist actualSpecialist = specialistsRepository.findById(id).get();
 
         assertThat(actualSpecialist.getName()).isEqualTo(changedName);
-        assertThat(actualSpecialist.getRoomNumber()).isEqualTo(ROOM_NUMBER);
         assertThat(actualSpecialist.isActive()).isTrue();
         assertThat(actualSpecialist.getOrganization()).isEqualTo(organization);
 
@@ -408,7 +360,7 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = specialistsService
             .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
             ).getId();
 
         final String changedName = "b";
@@ -417,7 +369,7 @@ public class SpecialistsControllerIntegrationTest {
             endpoint,
             jSessionId,
             HttpMethod.PUT,
-            new SpecialistDTO(id, changedName, ROOM_NUMBER, true, organization.getId()),
+            new SpecialistDTO(id, changedName, true, organization.getId()),
             String.class
         );
 
@@ -425,69 +377,13 @@ public class SpecialistsControllerIntegrationTest {
         assertThat(response.getBody()).contains(SPECIALIST_WRONG_NAME_LENGTH);
     }
 
-    @Test
-    public void testUpdateSpecialistsRoomNumber() {
-
-        final int id = specialistsService
-            .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-            ).getId();
-
-        final List<Specialist> specialistsBeforeUpdating = specialistsRepository.findAll();
-        final int expectedSize = specialistsBeforeUpdating.size();
-        final String changedRoomNumber = "18";
-
-        final ResponseEntity<SpecialistDTO> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.PUT,
-            new SpecialistDTO(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization.getId()),
-            SpecialistDTO.class
-        );
-
-        final List<Specialist> specialistsAfterUpdating = specialistsRepository.findAll();
-        final int actualSize = specialistsAfterUpdating.size();
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        final Specialist actualSpecialist = specialistsRepository.findById(id).get();
-
-        assertThat(actualSpecialist.getName()).isEqualTo(TEST_SPECIALIST_NAME);
-        assertThat(actualSpecialist.getRoomNumber()).isEqualTo(changedRoomNumber);
-        assertThat(actualSpecialist.isActive()).isTrue();
-        assertThat(actualSpecialist.getOrganization()).isEqualTo(organization);
-
-        assertThat(expectedSize).isEqualTo(actualSize);
-    }
-
-    @Test
-    public void testUpdateSpecialistWithWrongRoomNumber() {
-
-        final int id = specialistsService
-            .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-            ).getId();
-
-        final String changedRoomNumber = "12345678911234567";
-
-        final ResponseEntity<String> response = restClient.exchange(
-            endpoint,
-            jSessionId,
-            HttpMethod.PUT,
-            new SpecialistDTO(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization.getId()),
-            String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains(SPECIALIST_WRONG_ROOM_NUMBER_LENGTH);
-    }
 
     @Test
     public void testUpdateSpecialistsActive() {
 
         final int id = specialistsService
             .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
             ).getId();
 
         final List<Specialist> specialistsBeforeUpdating = specialistsRepository.findAll();
@@ -497,7 +393,7 @@ public class SpecialistsControllerIntegrationTest {
             endpoint,
             jSessionId,
             HttpMethod.PUT,
-            new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId()),
+            new SpecialistDTO(id, TEST_SPECIALIST_NAME, false, organization.getId()),
             SpecialistDTO.class
         );
 
@@ -509,7 +405,6 @@ public class SpecialistsControllerIntegrationTest {
         final Specialist actualSpecialist = specialistsRepository.findById(id).get();
 
         assertThat(actualSpecialist.getName()).isEqualTo(TEST_SPECIALIST_NAME);
-        assertThat(actualSpecialist.getRoomNumber()).isEqualTo(ROOM_NUMBER);
         assertThat(actualSpecialist.isActive()).isFalse();
         assertThat(actualSpecialist.getOrganization()).isEqualTo(organization);
 
@@ -521,7 +416,7 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = specialistsService
             .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
             ).getId();
 
         final List<Specialist> specialistsBeforeUpdating = specialistsRepository.findAll();
@@ -533,7 +428,7 @@ public class SpecialistsControllerIntegrationTest {
             endpoint,
             jSessionId,
             HttpMethod.PUT,
-            new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, changedOrganization.getId()),
+            new SpecialistDTO(id, TEST_SPECIALIST_NAME, true, changedOrganization.getId()),
             SpecialistDTO.class
         );
 
@@ -545,7 +440,6 @@ public class SpecialistsControllerIntegrationTest {
         final Specialist actualSpecialist = specialistsRepository.findById(id).get();
 
         assertThat(actualSpecialist.getName()).isEqualTo(TEST_SPECIALIST_NAME);
-        assertThat(actualSpecialist.getRoomNumber()).isEqualTo(ROOM_NUMBER);
         assertThat(actualSpecialist.isActive()).isTrue();
         assertThat(actualSpecialist.getOrganization()).isEqualTo(changedOrganization);
 
@@ -557,7 +451,7 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = specialistsService
             .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
             ).getId();
 
         final ActiveDTO notActiveDTO = new ActiveDTO();
@@ -583,7 +477,7 @@ public class SpecialistsControllerIntegrationTest {
 
         final int id = specialistsService
             .addSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, false, organization.getId())
             ).getId();
 
         final ActiveDTO activeDTO = new ActiveDTO();

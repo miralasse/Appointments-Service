@@ -1,0 +1,50 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+
+export class RemovingPopup extends React.Component {
+
+    constructor(props) {
+
+        super(props);
+        this.state = {
+            popup: false
+        };
+    }
+
+    render() {
+        return (<noscript></noscript>);
+    }
+
+
+    componentDidMount() {
+        this.renderPopup();
+    }
+
+    componentDidUpdate() {
+        this.renderPopup();
+    }
+
+    componentWillUnmount() {
+        ReactDOM.unmountComponentAtNode(this.popup);
+        document.body.removeChild(this.popup);
+    }
+
+    renderPopup() {
+        if (!this.popup) {
+            this.popup = document.createElement("div");
+            document.body.appendChild(this.popup);
+        }
+
+        ReactDOM.render(
+            <div className="popup-overlay">
+                <div className="removing-popup-content">
+                    {this.props.children}
+                </div>
+            </div>,
+            this.popup
+        );
+    }
+}
+
+export default RemovingPopup;

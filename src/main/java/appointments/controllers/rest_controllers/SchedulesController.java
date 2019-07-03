@@ -3,6 +3,9 @@ package appointments.controllers.rest_controllers;
 import appointments.dto.ScheduleDTO;
 import appointments.services.SchedulesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,10 +14,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.List;
+import java.time.LocalDate;
 
 /**
  * @author yanchenko_evgeniya
@@ -22,6 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/schedules")
 public class SchedulesController {
+
 
     private SchedulesService schedulesService;
 
@@ -32,20 +37,13 @@ public class SchedulesController {
 
     /** Метод, возвращающий все расписания */
     @GetMapping
-    public ResponseEntity<List<ScheduleDTO>> getAllSchedules() {
+    public ResponseEntity<Page<ScheduleDTO>> getAllSchedules(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) final LocalDate date,
+            Pageable pageable
+    ) {
 
         return new ResponseEntity<>(
-                schedulesService.getSchedules(),
-                HttpStatus.OK
-        );
-    }
-
-    /** Метод, возвращающий только активные расписания */
-    @GetMapping("/active")
-    public ResponseEntity<List<ScheduleDTO>> getActiveSchedules() {
-
-        return new ResponseEntity<>(
-                schedulesService.getActiveSchedules(),
+                schedulesService.getSchedules(pageable, date),
                 HttpStatus.OK
         );
     }

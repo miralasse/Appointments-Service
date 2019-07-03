@@ -11,81 +11,123 @@ class Form extends React.Component {
 
         super(props);
         this.initialState = {
-            id: '',
-            specialist: "Специалист 1",
-            service: "Получение путевки в ДОО",
-            room: '',
+            id: null,
+            specialist: {},
+            roomNumber: '',
             date: props.calendarDate,
+            services: [],
             startTime: '',
             endTime: '',
             interval: "15"
         };
-
         this.state = this.initialState;
-        this.submitForm = this.submitForm.bind(this);
-        this.handleShowForm = this.handleShowForm.bind(this);
-        this.handleChangeSpecialist = this.handleChangeSpecialist.bind(this);
-        this.handleChangeService = this.handleChangeService.bind(this);
-        this.handleChangeRoom = this.handleChangeRoom.bind(this);
-        this.handleChangeStartTime = this.handleChangeStartTime.bind(this);
-        this.handleChangeEndTime = this.handleChangeEndTime.bind(this);
-        this.handleChangeInterval = this.handleChangeInterval.bind(this);
     }
 
 
-    handleChangeSpecialist(event) {
+    handleChangeSpecialist = (event) => {
         this.setState({
-            specialist: event.target.value
+            specialist: {
+                id: event.target.value,
+                name: [...event.target.options]
+                    .filter(option => option.selected)
+                    .map(option => option.label)
+                    .join()
+            }
         });
-    }
+    };
 
-    handleChangeService(event) {
+    handleChangeServices = (event) => {
         this.setState({
-            service: event.target.value
+            services: [...event.target.options]
+                .filter(option => option.selected)
+                .map(option => {
+                    return {
+                        id: option.value,
+                        name: option.label
+                    };
+                })
         });
-    }
+    };
 
-    handleChangeRoom(event) {
+    handleChangeRoom = (event) => {
         this.setState({
-            room: event.target.value
+            roomNumber: event.target.value
         });
-    }
+    };
 
 
-    handleChangeStartTime(time) {
+    handleChangeStartTime = (time) => {
         this.setState({
             startTime: time
         });
-    }
+    };
 
-    handleChangeEndTime(time) {
+    handleChangeEndTime = (time) => {
         this.setState({
             endTime: time
         });
-    }
+    };
 
-    handleChangeInterval(event) {
+    handleChangeInterval = (event) => {
         this.setState({
             interval: event.target.value
         });
-    }
+    };
 
+    formatDate = (date) => {
+        return JSON.stringify(date).substring(1, 11);
+    };
 
-    submitForm() {
+    formatTime = (time) => {
+        return time.toLocaleString().substring(12, 20);
+    };
+
+    submitForm = () => {
+
+        const {date, startTime, endTime} = this.state;
 
         const schedule = {
             ...this.state,
-            id: Math.floor(Math.random() * 1000 + 1)
+            date: this.formatDate(date),
+            startTime: this.formatTime(startTime),
+            endTime: this.formatTime(endTime)
         };
+        console.log(schedule);
 
-        this.props.handleSubmit(schedule);
+        this.addSchedule(schedule);
         this.setState(this.initialState);
         this.handleShowForm();
-    }
+    };
 
-    handleShowForm() {
+    addSchedule = (schedule) => {
+
+        const schedulesUrl = '/schedules/';
+        fetch(
+            schedulesUrl,
+            {
+                credentials: 'include',
+                mode: 'cors',
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(schedule)
+            }
+        )
+            .then((result) => {
+                console.log('Request succeeded', result);
+                this.getAllSchedules();
+            })
+            .catch(function (error) {
+                console.log('Request failed', error);
+            });
+    };
+
+    handleShowForm = () => {
         this.props.handleShowForm();
-    }
+    };
+
+    getAllSchedules = () => {
+        this.props.getAllSchedules();
+    };
 
     render() {
 
@@ -94,9 +136,15 @@ class Form extends React.Component {
         const timeCaptionForTimePicker = "Время";
         const localeForTimePicker = "ru";
 
-        const {specialist, service, room, startTime, endTime, interval} = this.state;
+        const allServices = this.props.services;
+        const allSpecialists = this.props.specialists;
 
-        const isEnabled = startTime && endTime;
+        const {specialist, roomNumber, date, services, startTime, endTime, interval} = this.state;
+
+        const specialistId = specialist.id;
+        const servicesIds = services.map(serviceDTO => serviceDTO.id);
+
+        const isEnabled = specialistId && roomNumber && date && servicesIds && startTime && endTime && interval;
 
         return (
 
@@ -106,28 +154,37 @@ class Form extends React.Component {
                     <div className="form-group row">
                         <label htmlFor="selectSpecialist" className="col-sm-3 col-form-label">Специалист</label>
                         <div className="col-sm-9">
-                            <select value={specialist}
+                            <select value={specialistId}
                                     onChange={this.handleChangeSpecialist}
                                     className="form-control"
                                     id="selectSpecialist">
-                                <option value="Специалист 1">Специалист 1</option>
-                                <option value="Специалист 2">Специалист 2</option>
-                                <option value="Специалист 3">Специалист 3</option>
+                                <option value="">
+                                    --Выбрать специалиста--
+                                </option>
+                                {allSpecialists.map(specialist => (
+                                    <option key={specialist.id}
+                                            value={specialist.id}
+                                            label={specialist.name}
+                                    />
+                                ))}
                             </select>
                         </div>
                     </div>
 
                     <div className="form-group row">
-
-                        <label htmlFor="selectService" className="col-sm-3 col-form-label">Услуга</label>
+                        <label htmlFor="selectServices" className="col-sm-3 col-form-label">Услуга</label>
                         <div className="col-sm-9">
-                            <select value={service}
-                                    onChange={this.handleChangeService}
+                            <select multiple={true}
+                                    value={servicesIds}
+                                    onChange={this.handleChangeServices}
                                     className="form-control"
-                                    id="selectService">
-                                <option value="Получение путевки в ДОО">Получение путевки в ДОО</option>
-                                <option value="Постановка на очередь в ДС">Постановка на очередь в ДС</option>
-                                <option value="Льготное питание">Льготное питание</option>
+                                    id="selectServices">
+                                {allServices.map(service => (
+                                    <option key={service.id}
+                                            value={service.id}
+                                            label={service.name}
+                                    />
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -136,7 +193,7 @@ class Form extends React.Component {
                         <label htmlFor="inputRoom" className="col-sm-3 col-form-label">Кабинет</label>
                         <div className="col-sm-3">
                             <input type="text"
-                                   value={room}
+                                   value={roomNumber}
                                    onChange={this.handleChangeRoom}
                                    className="form-control"
                                    id="inputRoom"
@@ -211,7 +268,8 @@ class Form extends React.Component {
                         </div>
 
                         <div className="col-auto my-1">
-                            <button className="btn btn-secondary"
+                            <button type="button"
+                                    className="btn btn-secondary"
                                     onClick={this.handleShowForm}>
                                 Отменить
                             </button>
@@ -226,4 +284,4 @@ class Form extends React.Component {
     }
 }
 
-export default Form
+export default Form;

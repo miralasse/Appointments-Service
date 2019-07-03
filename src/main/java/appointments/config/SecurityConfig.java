@@ -29,7 +29,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final BCryptPasswordEncoder passwordEncoder;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
-
     public SecurityConfig(
             UsersService usersService,
             BCryptPasswordEncoder passwordEncoder,
@@ -54,9 +53,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         .permitAll()
                     .antMatchers("/")
                         .authenticated()
-                    .antMatchers(
-                            HttpMethod.GET, "/services/active", "/specialists/active", "/schedules/active"
-                    )
+                    .antMatchers(HttpMethod.GET, "/services/active", "/specialists/active")
                         .permitAll()
                     .antMatchers(HttpMethod.POST, "/reservations/**")
                         .hasAnyRole(SECURITY_ROLE_USER_NAME, SECURITY_ROLE_ADMIN_NAME)
@@ -64,9 +61,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         .hasAnyRole(SECURITY_ROLE_USER_NAME, SECURITY_ROLE_ADMIN_NAME)
                     .antMatchers(HttpMethod.POST, "/services/**", "/specialists/**", "/schedules/**")
                         .hasRole(SECURITY_ROLE_ADMIN_NAME)
-                    .antMatchers(
-                            HttpMethod.GET, "/services/**", "/specialists/**", "/schedules/**"
-                    )
+                    .antMatchers(HttpMethod.GET, "/services/**", "/specialists/**", "/schedules/**")
                         .hasRole(SECURITY_ROLE_ADMIN_NAME)
                     .antMatchers(HttpMethod.DELETE, "/services/**", "/specialists/**", "/schedules/**")
                         .hasRole(SECURITY_ROLE_ADMIN_NAME)

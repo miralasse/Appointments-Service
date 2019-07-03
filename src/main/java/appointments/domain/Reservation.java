@@ -54,7 +54,7 @@ public class Reservation {
 
     /** Ссылка на расписание (объект Schedule), в котором осуществляется эта запись на прием */
     @NotNull(message = RESERVATION_EMPTY_SCHEDULE_MESSAGE)
-    @ManyToOne
+    @ManyToOne()
     @JoinColumn(name = "schedule_id")
     private Schedule schedule;
 

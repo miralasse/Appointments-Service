@@ -3,6 +3,7 @@ package appointments.integration;
 import appointments.TestHelper;
 import appointments.domain.Service;
 import appointments.dto.ActiveDTO;
+import appointments.integration.utils.TestRestClient;
 import appointments.repos.ServicesRepository;
 import appointments.services.ServicesService;
 import org.junit.Before;
@@ -60,10 +61,7 @@ public class ServicesControllerIntegrationTest {
     @Before
     public void setUp() {
 
-        testHelper.clearAll();
-        testHelper.initRoles();
-        testHelper.initUsers();
-        testHelper.initServices();
+        testHelper.refill();
         restClient = new TestRestClient(restTemplate);
         jSessionId = testHelper.loginAsAdmin(restClient);
     }

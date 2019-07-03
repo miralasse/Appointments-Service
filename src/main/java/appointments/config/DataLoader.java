@@ -1,23 +1,20 @@
-package appointments;
+package appointments.config;
 
 import appointments.domain.Child;
 import appointments.domain.Organization;
 import appointments.domain.Reservation;
-import appointments.domain.Role;
 import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.domain.Specialist;
-import appointments.domain.User;
-import appointments.integration.utils.TestRestClient;
 import appointments.repos.ChildrenRepository;
 import appointments.repos.OrganizationsRepository;
 import appointments.repos.ReservationsRepository;
-import appointments.repos.RolesRepository;
 import appointments.repos.SchedulesRepository;
 import appointments.repos.ServicesRepository;
 import appointments.repos.SpecialistsRepository;
-import appointments.repos.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,22 +24,22 @@ import java.time.LocalTime;
 import java.time.Month;
 import java.util.ArrayList;
 
-/**
- * Служебный класс, осуществляюший первичное наполнение тестовой базы
+/** Класс для первичного наполнения базы данных
  *
  * @author yanchenko_evgeniya
  */
+@SuppressWarnings("Duplicates")
 @Component
-public class TestHelper {
+public class DataLoader implements ApplicationRunner {
 
     /** Поля с числовыми константами для создания тестовых объектов */
 
-    public final static String SPECIALIST_NAME_FIRST = "Специалист 1";
-    public final static String SPECIALIST_NAME_SECOND = "Специалист 2";
-    public final static String SPECIALIST_NAME_THIRD = "Специалист 3";
+    private final static String SPECIALIST_NAME_FIRST = "Специалист 1";
+    private final static String SPECIALIST_NAME_SECOND = "Специалист 2";
+    private final static String SPECIALIST_NAME_THIRD = "Специалист 3";
 
-    public final static String SERVICE_NAME_FIRST = "Постановка на очередь";
-    public final static String SERVICE_NAME_SECOND = "Получение путевки в ДОО";
+    private final static String SERVICE_NAME_FIRST = "Постановка на очередь";
+    private final static String SERVICE_NAME_SECOND = "Получение путевки в ДОО";
 
     private final static int BIRTH_CERTIFICATE_FIRST = 456845;
     private final static int BIRTH_CERTIFICATE_SECOND = 321856;
@@ -62,10 +59,10 @@ public class TestHelper {
     private final static int DAY_TWELVE = 12;
     private final static int DAY_FIFTEEN = 15;
 
-    public final static LocalDate JULY_TWELVE = LocalDate.of(YEAR, Month.JULY, DAY_TWELVE);
-    public final static LocalDate JULY_FIFTEEN = LocalDate.of(YEAR, Month.JULY, DAY_FIFTEEN);
-    public final static LocalDate AUGUST_TWELVE = LocalDate.of(YEAR, Month.AUGUST, DAY_TWELVE);
-    public final static LocalDate AUGUST_FIFTEEN = LocalDate.of(YEAR, Month.AUGUST, DAY_FIFTEEN);
+    private final static LocalDate JULY_TWELVE = LocalDate.of(YEAR, Month.JULY, DAY_TWELVE);
+    private final static LocalDate JULY_FIFTEEN = LocalDate.of(YEAR, Month.JULY, DAY_FIFTEEN);
+    private final static LocalDate AUGUST_TWELVE = LocalDate.of(YEAR, Month.AUGUST, DAY_TWELVE);
+    private final static LocalDate AUGUST_FIFTEEN = LocalDate.of(YEAR, Month.AUGUST, DAY_FIFTEEN);
 
     private final static LocalTime FIRST_OFFICE_HOURS_START = LocalTime.of(8, 0);
     private final static LocalTime FIRST_OFFICE_HOURS_END = LocalTime.of(13, 0);
@@ -76,24 +73,17 @@ public class TestHelper {
     private final static LocalTime THIRD_OFFICE_HOURS_START = LocalTime.of(10, 0);
     private final static LocalTime THIRD_OFFICE_HOURS_END = LocalTime.of(15, 0);
 
-    public final static LocalDateTime FIRST_RESERVATION_HOUR
+    private final static LocalDateTime FIRST_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.JULY, DAY_TWELVE, 9, 15);
-    public final static LocalDateTime SECOND_RESERVATION_HOUR
+    private final static LocalDateTime SECOND_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_TWELVE, 9, 15);
-    public final static LocalDateTime THIRD_RESERVATION_HOUR
+    private final static LocalDateTime THIRD_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_FIFTEEN, 11, 30);
-    public final static LocalDateTime FOURTH_RESERVATION_HOUR
+    private final static LocalDateTime FOURTH_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_TWELVE, 11, 45);
-    public final static LocalDateTime FIFTH_RESERVATION_HOUR
+    private final static LocalDateTime FIFTH_RESERVATION_HOUR
             = LocalDateTime.of(YEAR, Month.AUGUST, DAY_FIFTEEN, 12, 30);
 
-    private final static String USER_ROLE = "ROLE_USER";
-    private final static String ADMIN_ROLE = "ROLE_ADMIN";
-
-    private final static String ADMIN_LOGIN = "admin";
-    private final static String ADMIN_PASSWORD = "100";
-    private final static String USER_LOGIN = "user";
-    private final static String USER_PASSWORD = "100";
 
     /** Поля для хранения репозиториев */
     private ChildrenRepository childrenRepository;
@@ -102,19 +92,15 @@ public class TestHelper {
     private SpecialistsRepository specialistsRepository;
     private SchedulesRepository schedulesRepository;
     private ReservationsRepository reservationsRepository;
-    private RolesRepository rolesRepository;
-    private UsersRepository usersRepository;
 
     @Autowired
-    public TestHelper(
+    public DataLoader(
             ChildrenRepository childrenRepository,
             OrganizationsRepository organizationsRepository,
             ServicesRepository servicesRepository,
             SpecialistsRepository specialistsRepository,
             SchedulesRepository schedulesRepository,
-            ReservationsRepository reservationsRepository,
-            RolesRepository rolesRepository,
-            UsersRepository usersRepository
+            ReservationsRepository reservationsRepository
     ) {
         this.childrenRepository = childrenRepository;
         this.organizationsRepository = organizationsRepository;
@@ -122,32 +108,18 @@ public class TestHelper {
         this.specialistsRepository = specialistsRepository;
         this.schedulesRepository = schedulesRepository;
         this.reservationsRepository = reservationsRepository;
-        this.rolesRepository = rolesRepository;
-        this.usersRepository = usersRepository;
-    }
 
-    /** Метод для логина пользователя с ролью ADMIN и получения идентификатора сессии */
-    public String loginAsAdmin(TestRestClient restClient) {
-        return restClient.login(ADMIN_LOGIN, ADMIN_PASSWORD);
-    }
-
-    /** Метод для логина пользователя с ролью USER и получения идентификатора сессии */
-    public String loginAsUser(TestRestClient restClient) {
-        return restClient.login(USER_LOGIN, USER_PASSWORD);
     }
 
     /** Метод для очистки и первичного наполнения всех таблиц */
-    @Transactional
-    public void refill() {
+    private void refill() {
         clearAll();
         initAll();
     }
 
 
     /** Метод для первичного наполнения всех таблиц */
-    public void initAll() {
-        initRoles();
-        initUsers();
+    private void initAll() {
         initChildren();
         initOrganizations();
         initServices();
@@ -157,40 +129,8 @@ public class TestHelper {
     }
 
 
-    public void initRoles() {
-        rolesRepository.save(new Role(null, USER_ROLE));
-        rolesRepository.save(new Role(null, ADMIN_ROLE));
-    }
-
-    public void initUsers() {
-
-        usersRepository.save(new User(
-                        null,
-                        "user",
-                        "$2a$04$Fx/SX9.BAvtPlMyIIqqFx.hLY2Xp8nnhpzvEEVINvVpwIPbA3v/.i",
-                        "Mary",
-                        "Green",
-                        "user@gmail.com",
-                        "+79203333333",
-                        rolesRepository.findOneByName(USER_ROLE).get()
-                )
-        );
-
-        usersRepository.save(new User(
-                null,
-                "admin",
-                "$2a$04$Fx/SX9.BAvtPlMyIIqqFx.hLY2Xp8nnhpzvEEVINvVpwIPbA3v/.i",
-                "John",
-                "Smith",
-                "admin@gmail.com",
-                "+79201111111",
-                rolesRepository.findOneByName(ADMIN_ROLE).get()
-                )
-        );
-    }
-
     /** Метод для первичного наполнения таблицы children */
-    public void initChildren() {
+    private void initChildren() {
 
         childrenRepository.save(new Child(
                 null, "I-56", BIRTH_CERTIFICATE_FIRST,
@@ -212,7 +152,7 @@ public class TestHelper {
     }
 
     /** Метод для первичного наполнения таблицы organization */
-    public void initOrganizations() {
+    private void initOrganizations() {
 
         organizationsRepository.save(new Organization(
                 null, ORGANIZATION_NAME_FIRST,
@@ -231,7 +171,7 @@ public class TestHelper {
     }
 
     /** Метод для первичного наполнения таблицы services */
-    public void initServices() {
+    private void initServices() {
 
         servicesRepository.save(new Service(
                 null, SERVICE_NAME_FIRST, true
@@ -314,7 +254,7 @@ public class TestHelper {
     }
 
     /** Метод для первичного наполнения таблицы reservations */
-    public void initReservations() {
+    private void initReservations() {
 
         initReservationsForJulyTwelve();
         initReservationsForAugustTwelve();
@@ -416,55 +356,49 @@ public class TestHelper {
 
 
     /** Метод для очистки всех таблиц */
-    public void clearAll() {
+    private void clearAll() {
         clearReservations();
         clearSchedules();
         clearSpecialists();
         clearServices();
         clearOrganizations();
         clearChildren();
-        clearUsers();
-        clearRoles();
     }
 
     /** Метод для очистки таблицы children */
-    public void clearChildren() {
+    private void clearChildren() {
         childrenRepository.deleteAll();
     }
 
     /** Метод для очистки таблицы organizations */
-    public void clearOrganizations() {
+    private void clearOrganizations() {
         organizationsRepository.deleteAll();
     }
 
     /** Метод для очистки таблицы services */
-    public void clearServices() {
+    private void clearServices() {
         servicesRepository.deleteAll();
     }
 
     /** Метод для очистки таблицы specialists */
-    public void clearSpecialists() {
+    private void clearSpecialists() {
         specialistsRepository.deleteAll();
     }
 
     /** Метод для очистки таблицы schedules */
-    public void clearSchedules() {
+    private void clearSchedules() {
         schedulesRepository.deleteAll();
     }
 
     /** Метод для очистки таблицы reservations */
-    public void clearReservations() {
+    private void clearReservations() {
         reservationsRepository.deleteAll();
     }
 
-    /** Метод для очистки таблицы users */
-    public void clearUsers() {
-        usersRepository.deleteAll();
-    }
 
-    /** Метод для очистки таблицы roles */
-    public void clearRoles() {
-        rolesRepository.deleteAll();
+    @Override
+    @Transactional
+    public void run(ApplicationArguments args) {
+        refill();
     }
-
 }

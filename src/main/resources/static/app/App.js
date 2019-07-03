@@ -1,9 +1,10 @@
 import React from 'react';
-import ScheduleTable from './ScheduleTable';
 import Form from './Form';
 import Header from './Header';
 import Button from "./Button";
-import Popup from "./Popup";
+import FormPopup from "./FormPopup";
+import SchedulesTable from "./SchedulesTable";
+import Pagination from "./Pagination";
 
 
 class App extends React.Component {
@@ -11,95 +12,212 @@ class App extends React.Component {
     constructor(props) {
 
         super(props);
+
+        this.pageSize = 2;
+
         this.state = {
-            schedules: [
-                {
-                    id: 1001,
-                    specialist: "Специалист 1",
-                    service: "Получение путевки в ДОО",
-                    room: "26",
-                    date: new Date(),
-                    startTime: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 8, 0, 0, 0),
-                    endTime: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 14, 0, 0, 0),
-                    interval: "15"
-                },
-                {
-                    id: 1002,
-                    specialist: "Специалист 2",
-                    service: "Постановка на очередь в ДС",
-                    room: "34",
-                    date: new Date(),
-                    startTime: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 9, 0, 0, 0),
-                    endTime: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 16, 0, 0, 0),
-                    interval: "15"
-                }
-            ],
+            schedules: [],
+            services: [],
+            specialists: [],
+            isSchedulesLoaded: false,
+            isServicesLoaded: false,
+            isSpecialistsLoaded: false,
             isPopupVisible: false,
-            calendarDate: new Date()
+            calendarDate: new Date(),
+            page: {
+                pageNumber: 0,
+                size: this.pageSize
+            }
         };
-
-        this.handleDateChange = this.handleDateChange.bind(this);
-        this.removeSchedule = this.removeSchedule.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-        this.openPopup = this.openPopup.bind(this);
-        this.closePopup = this.closePopup.bind(this);
     }
 
-    handleDateChange(date) {
+    componentDidMount() {
+
+        this.fetchAllSchedules();
+        this.fetchServicesAndSpecialists();
+    }
+
+    handleDateChange = (date) => {
         this.setState({
-            calendarDate: date
-        });
-    }
+                calendarDate: date,
+                page: {
+                    pageNumber: 0,
+                    size: this.pageSize
+                }
+            },
+            () => {
+                this.fetchAllSchedules()
+            }
+        );
+    };
 
-    removeSchedule(id) {
-        this.setState(state => {
-            state.schedules.filter(schedule => schedule.id !== id)
-        });
-    }
-
-
-    handleSubmit(schedule) {
-        this.setState({
-            schedules: [...this.state.schedules, schedule]
-        });
-    }
-
-    openPopup() {
+    openPopup = () => {
         this.setState({
             isPopupVisible: true
         });
-    }
+    };
 
-    closePopup() {
+    closePopup = () => {
         this.setState({
             isPopupVisible: false
         });
-    }
+    };
+
+    changePageNumber = (number) => {
+        this.setState(previousState => ({
+                page: {
+                    ...previousState.page,
+                    pageNumber: number
+                }
+            }),
+            () => {
+                this.fetchAllSchedules()
+            }
+        );
+    };
+
+    fetchAllSchedules = () => {
+        const date = this.state.calendarDate.toISOString().split('T')[0];
+        const schedulesUrl = '/schedules/?date=' + date + '&page=' + this.state.page.pageNumber + '&size=' + this.state.page.size;
+
+        fetch(
+            schedulesUrl,
+            {
+                credentials: 'include',
+                mode: 'cors'
+            }
+        )
+            .then(response => response.json())
+            .then((page) => {
+
+                const schedules = page.content.map(schedule => {
+
+                    const specialistName = schedule.specialist.name;
+
+                    const servicesNames = schedule.services
+                        .map(service => service.name)
+                        .join(', ');
+
+                    return {
+                        id: schedule.id,
+                        specialistName: specialistName,
+                        servicesNames: servicesNames,
+                        roomNumber: schedule.roomNumber,
+                        date: schedule.date,
+                        startTime: schedule.startTime,
+                        endTime: schedule.endTime,
+                        interval: schedule.interval
+                    }
+                });
+
+                this.setState(previousState => ({
+                    page: {
+                        ...previousState.page,
+                        isEmpty: page.empty,
+                        totalPages: page.totalPages,
+                        pageNumber: page.number
+                    },
+                    schedules: schedules,
+                    isSchedulesLoaded: true
+                }));
+            })
+            .catch(function (error) {
+                console.log('Request failed', error);
+            });
+    };
+
+    fetchServicesAndSpecialists = () => {
+
+        Promise.all([this.fetchAllServices(), this.fetchAllSpecialists()])
+            .then(values => {
+                this.setState({
+                    services: values[0],
+                    isServicesLoaded: true,
+                    specialists: values[1],
+                    isSpecialistsLoaded: true
+                });
+            });
+    };
+
+    fetchAllServices = () => {
+
+        const servicesUrl = '/services/';
+
+        return fetch(
+            servicesUrl,
+            {
+                credentials: 'include',
+                mode: 'cors'
+            }
+        )
+            .then(response => response.json())
+            .catch(function (error) {
+                console.log('Request failed', error);
+            });
+    };
+
+    fetchAllSpecialists = () => {
+
+        const specialistsUrl = '/specialists/';
+
+        return fetch(
+            specialistsUrl,
+            {
+                credentials: 'include',
+                mode: 'cors'
+            }
+        )
+            .then(response => response.json())
+            .catch(function (error) {
+                console.log('Request failed', error);
+            });
+    };
 
     render() {
 
-        const {schedules, isPopupVisible} = this.state;
+        const { services, specialists, schedules, isSchedulesLoaded, isServicesLoaded, isSpecialistsLoaded, isPopupVisible, calendarDate } = this.state;
+
         const buttonOrPopup = isPopupVisible
-            ? <Popup>
+            ? <FormPopup>
                 <Form handleShowForm={this.closePopup}
-                      handleSubmit={this.handleSubmit}
-                      calendarDate={this.state.calendarDate}
+                      calendarDate={calendarDate}
+                      getAllSchedules={this.fetchAllSchedules}
+                      services={services}
+                      specialists={specialists}
                 />
-            </Popup>
+            </FormPopup>
             : <Button handleShowForm={this.openPopup}/>;
 
-        return (
-            <div className="container">
-                <Header/>
-                <ScheduleTable schedules={schedules}
-                               removeSchedule={this.removeSchedule}
-                               handleDateChange={this.handleDateChange}
-                               calendarDate={this.state.calendarDate}
-                />
-                {buttonOrPopup}
-            </div>
-        );
+        const {isEmpty, totalPages, pageNumber} = this.state.page;
+
+        const showPagination = (!isEmpty && totalPages > 1)
+            ? <Pagination pageNumber={pageNumber} totalPages={totalPages} changePageNumber={this.changePageNumber}/>
+            : '';
+
+        if (isSchedulesLoaded && isServicesLoaded && isSpecialistsLoaded) {
+            return (
+                <div className="container">
+                    <Header/>
+                    <SchedulesTable
+                        handleDateChange={this.handleDateChange}
+                        calendarDate={calendarDate}
+                        getAllSchedules={this.fetchAllSchedules}
+                        schedules={schedules}
+                    />
+                    {showPagination}
+                    {buttonOrPopup}
+                </div>
+            );
+        } else {
+            return (
+                <div className="spinner-border text-primary spinner" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+            );
+        }
+
+
     }
 }
 
-export default App
+export default App;

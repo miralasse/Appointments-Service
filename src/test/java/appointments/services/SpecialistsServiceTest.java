@@ -26,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SpecialistsServiceTest {
 
     private static final String TEST_SPECIALIST_NAME = "Иванова Ольга Викторовна";
-    private static final String ROOM_NUMBER = "25";
     private final static String ORGANIZATION_NAME = "Управление образования г. Белгород";
 
     private Organization organization;
@@ -56,12 +55,12 @@ public class SpecialistsServiceTest {
 
         final int id = specialistsService
                 .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
                 ).getId();
 
         final int actualSize = specialistsService.getSpecialists().size();
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
+                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, true, organization.getId());
 
         assertThat(specialistsService.getSpecialists()).contains(testSpecialistDTO);
         assertThat(expectedSize).isEqualTo(actualSize);
@@ -73,40 +72,19 @@ public class SpecialistsServiceTest {
 
         final int id = specialistsService
                 .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
                 ).getId();
 
         final String changedName = "Петрова Екатерина Васильевна";
 
         specialistsService.editSpecialist(
-                new SpecialistDTO(id, changedName, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(id, changedName, true, organization.getId())
         );
 
         final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
-        final Specialist testSpecialist = new Specialist(id, changedName, ROOM_NUMBER, true, organization);
+        final Specialist testSpecialist = new Specialist(id, changedName, true, organization);
 
         assertThat(actualSpecialistDTO.getName()).isEqualTo(testSpecialist.getName());
-    }
-
-    @Test
-    @Transactional
-    public void testEditSpecialistRoomNumber() {
-
-        final int id = specialistsService
-                .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
-                ).getId();
-
-        final String changedRoomNumber = "18";
-
-        specialistsService.editSpecialist(
-                new SpecialistDTO(id, TEST_SPECIALIST_NAME, changedRoomNumber, true, organization.getId())
-        );
-        final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
-        final Specialist testSpecialist
-                = new Specialist(id, TEST_SPECIALIST_NAME, changedRoomNumber,  true, organization);
-
-        assertThat(actualSpecialistDTO.getRoomNumber()).isEqualTo(testSpecialist.getRoomNumber());
     }
 
     @Test
@@ -115,11 +93,11 @@ public class SpecialistsServiceTest {
 
         final int id = specialistsService
                 .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
                 ).getId();
 
         specialistsService.editSpecialist(
-                new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId())
+                new SpecialistDTO(id, TEST_SPECIALIST_NAME, false, organization.getId())
         );
 
         final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
@@ -133,19 +111,19 @@ public class SpecialistsServiceTest {
 
         final int id = specialistsService
                 .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
                 ).getId();
 
         final Organization changedOrganization
                 = organizationsRepository.findOneByName("Управление образования г. Старый Оскол").orElse(null);
 
         specialistsService.editSpecialist(
-                new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, changedOrganization.getId())
+                new SpecialistDTO(id, TEST_SPECIALIST_NAME, false, changedOrganization.getId())
         );
 
         final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
         final Specialist testSpecialist
-                = new Specialist(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, changedOrganization);
+                = new Specialist(id, TEST_SPECIALIST_NAME, true, changedOrganization);
 
         assertThat(actualSpecialistDTO.getOrganizationId()).isEqualTo(testSpecialist.getOrganization().getId());
     }
@@ -154,7 +132,7 @@ public class SpecialistsServiceTest {
     @Transactional
     public void testEditSpecialistWithNullId() {
         specialistsService.editSpecialist(
-                new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
         );
     }
 
@@ -162,7 +140,7 @@ public class SpecialistsServiceTest {
     @Transactional
     public void testEditSpecialistWithWrongId() {
         specialistsService.editSpecialist(
-                new SpecialistDTO(Integer.MIN_VALUE, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                new SpecialistDTO(Integer.MIN_VALUE, TEST_SPECIALIST_NAME, true, organization.getId())
         );
     }
 
@@ -172,7 +150,7 @@ public class SpecialistsServiceTest {
 
         final int id = specialistsService
                 .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
                 ).getId();
 
         final int expectedSize = specialistsService.getSpecialists().size() - 1;
@@ -181,7 +159,7 @@ public class SpecialistsServiceTest {
 
         final int actualSize = specialistsService.getSpecialists().size();
         final SpecialistDTO testSpecialistDTO
-                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
+                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, true, organization.getId());
 
         assertThat(specialistsService.getSpecialists()).doesNotContain(testSpecialistDTO);
         assertThat(expectedSize).isEqualTo(actualSize);
@@ -205,11 +183,11 @@ public class SpecialistsServiceTest {
 
         final int id = specialistsService
                 .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
                 ).getId();
 
         final SpecialistDTO expectedSpecialistDTO
-                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId());
+                = new SpecialistDTO(id, TEST_SPECIALIST_NAME, true, organization.getId());
         final SpecialistDTO actualSpecialistDTO = specialistsService.findSpecialistById(id);
 
         assertThat(expectedSpecialistDTO).isEqualTo(actualSpecialistDTO);
@@ -233,7 +211,7 @@ public class SpecialistsServiceTest {
 
         final int id = specialistsService
                 .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, false, organization.getId())
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, false, organization.getId())
                 ).getId();
 
         specialistsService.changeActiveState(id, true);
@@ -261,7 +239,7 @@ public class SpecialistsServiceTest {
 
         final int id = specialistsService
                 .addSpecialist(
-                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, ROOM_NUMBER, true, organization.getId())
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
                 ).getId();
 
         specialistsService.changeActiveState(id, false);

@@ -19,13 +19,9 @@ import javax.validation.constraints.Size;
 
 import static appointments.utils.Constants.SPECIALIST_EMPTY_NAME_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_EMPTY_ORGANIZATION_MESSAGE;
-import static appointments.utils.Constants.SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_MAX_NAME_LENGTH;
-import static appointments.utils.Constants.SPECIALIST_MAX_ROOM_NUMBER_LENGTH;
 import static appointments.utils.Constants.SPECIALIST_MIN_NAME_LENGTH;
-import static appointments.utils.Constants.SPECIALIST_MIN_ROOM_NUMBER_LENGTH;
 import static appointments.utils.Constants.SPECIALIST_WRONG_NAME_LENGTH;
-import static appointments.utils.Constants.SPECIALIST_WRONG_ROOM_NUMBER_LENGTH;
 
 
 /**
@@ -58,17 +54,6 @@ public class Specialist {
     )
     @Column
     private String name;
-
-
-    /** Номер кабинета */
-    @NotEmpty(message = SPECIALIST_EMPTY_ROOM_NUMBER_MESSAGE)
-    @Size(
-            min = SPECIALIST_MIN_ROOM_NUMBER_LENGTH,
-            max = SPECIALIST_MAX_ROOM_NUMBER_LENGTH,
-            message = SPECIALIST_WRONG_ROOM_NUMBER_LENGTH
-    )
-    @Column(name = "room_number")
-    private String roomNumber;
 
 
     /** Флаг активности специалиста */

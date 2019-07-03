@@ -33,7 +33,6 @@ public class ServicesServiceTest {
 
     @Before
     public void setUp() {
-
         testHelper.refill();
     }
 

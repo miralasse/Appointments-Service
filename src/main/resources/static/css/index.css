@@ -78,8 +78,32 @@ h3 {
     -moz-box-sizing: border-box;
     box-sizing: border-box;
 }
+
+.removing-popup-content {
+    width: 30%;
+    height: 20%;
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    text-align: center;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
 .popup-closer {
     position: absolute;
     top: 5px;
     right: 5px;
+}
+
+.spinner {
+    margin: 20% 50%;
 }
