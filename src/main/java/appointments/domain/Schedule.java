@@ -8,7 +8,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.validator.constraints.Range;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -29,16 +28,16 @@ import java.util.List;
 
 import static appointments.utils.Constants.SCHEDULE_EMPTY_END_TIME_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_INTERVAL_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_EMPTY_ROOM_NUMBER_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_SERVICES_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_SPECIALIST_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_START_TIME_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_INCORRECT_DATE_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_MAX_INTERVAL_LENGTH;
-import static appointments.utils.Constants.SCHEDULE_MIN_INTERVAL_LENGTH;
-import static appointments.utils.Constants.SCHEDULE_WRONG_INTERVAL_LENGTH;
-import static appointments.utils.Constants.SCHEDULE_EMPTY_ROOM_NUMBER_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_MAX_ROOM_NUMBER_LENGTH;
+import static appointments.utils.Constants.SCHEDULE_MIN_INTERVAL_LENGTH;
 import static appointments.utils.Constants.SCHEDULE_MIN_ROOM_NUMBER_LENGTH;
+import static appointments.utils.Constants.SCHEDULE_WRONG_INTERVAL_LENGTH;
 import static appointments.utils.Constants.SCHEDULE_WRONG_ROOM_NUMBER_LENGTH;
 
 
@@ -132,7 +131,7 @@ public class Schedule {
 
 
     /** Список забронированных интервалов времени (ссылки на объекты Reservation) в этом расписании */
-    @OneToMany(mappedBy = "schedule", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "schedule")
     private List<Reservation> reservations;
 
 }

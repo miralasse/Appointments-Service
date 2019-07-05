@@ -1,6 +1,7 @@
 package appointments.handlers;
 
 import appointments.dto.UserDTO;
+import appointments.exceptions.EntityDependencyException;
 import appointments.exceptions.EntityNotFoundException;
 import appointments.exceptions.UserAlreadyExistsException;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +91,21 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
+
+
+    /** Метод, реализующий обработку исключений, возникающих при попытке удалить сущность,
+     * на которую есть ссылки в других сущностях */
+    @ExceptionHandler(EntityDependencyException.class)
+    protected ResponseEntity<String> handleEntityDependencyException(Exception e) {
+
+        log.error(e.getMessage());
+
+        return new ResponseEntity<>(
+                e.getMessage(),
+                HttpStatus.CONFLICT
+        );
+    }
+
 
 
     /** Метод, реализующий обработку остальных исключений */

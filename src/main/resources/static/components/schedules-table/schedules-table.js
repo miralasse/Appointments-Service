@@ -1,6 +1,7 @@
 import React from 'react';
-import CalendarDatePicker from "./CalendarDatePicker";
-import RemovingPopup from "./RemovingPopup";
+
+import CalendarDatePicker from "../calendar-date-picker";
+import WarningPopup from "../warning-popup";
 
 
 class SchedulesTable extends React.Component {
@@ -10,7 +11,8 @@ class SchedulesTable extends React.Component {
         super(props);
         this.state = {
             isRemovingPopupVisible: false,
-            idToRemove: null
+            idToRemove: null,
+            isWarningPopupVisible: false
         };
     }
 
@@ -25,6 +27,18 @@ class SchedulesTable extends React.Component {
         this.setState({
             idToRemove: id,
             isRemovingPopupVisible: true
+        });
+    };
+
+    showWarning = () => {
+        this.setState({
+            isWarningPopupVisible: true
+        });
+    };
+
+    closeWarning = () => {
+        this.setState({
+            isWarningPopupVisible: false
         });
     };
 
@@ -46,17 +60,22 @@ class SchedulesTable extends React.Component {
                 headers: {'Content-Type': 'application/json'}
             }
         )
+            .then((response) => {
+                if (response.status === 409) {
+                    this.showWarning();
+                }
+            })
             .then(() => {
-                this.setState({
+                this.setState(
+                    {
                         idToRemove: null,
                         isRemovingPopupVisible: false
-                    }, () => {
-                        this.getAllSchedules();
-                    }
+                    },
+                    () => this.getAllSchedules()
                 );
             })
-            .catch(function (error) {
-                console.log('Request failed', error);
+            .catch((error) => {
+                alert(`При удалении возникла ошибка: ${error}`);
             });
     };
 
@@ -67,13 +86,26 @@ class SchedulesTable extends React.Component {
         const removeSchedule = this.removeSchedule;
 
         const showRemovingPopup = this.state.isRemovingPopupVisible
-            ? <RemovingPopup>
+            ? <WarningPopup>
                 <div>
                     <div className="m-2">Вы действительно хотите удалить расписание?</div>
                     <ButtonCancel cancelRemove={cancelRemove}/>
                     <ButtonRemove removeSchedule={removeSchedule}/>
                 </div>
-            </RemovingPopup>
+            </WarningPopup>
+            : '';
+
+        const showWarningPopup = this.state.isWarningPopupVisible
+            ? <WarningPopup>
+                <div>
+                    <div className="alert alert-danger m-2" role="alert">
+                        Это расписание нельзя удалить, поскольку для него существуют записи на прием.
+                    </div>
+                    <button className="btn btn-primary" onClick={this.closeWarning}>
+                        Понятно
+                    </button>
+                </div>
+            </WarningPopup>
             : '';
 
         const schedules = this.props.schedules;
@@ -85,13 +117,14 @@ class SchedulesTable extends React.Component {
             <div>
                 <CalendarDatePicker date={calendarDate} handleDateChange={handleDateChange}/>
 
-                <table className="table table-sm table-striped scheduleTable">
+                <table className="table table-sm table-striped customTable">
                     <colgroup span="2" style={{width: 20 + '%'}}/>
                     <colgroup span="6" style={{width: 10 + '%'}}/>
                     <TableHeader/>
                     <TableBody date={calendarDate} schedules={schedules} setIdToRemove={setIdToRemove}/>
                 </table>
                 {showRemovingPopup}
+                {showWarningPopup}
             </div>
         );
     }
@@ -131,7 +164,7 @@ const TableBody = (props) => {
                 <td>{schedule.endTime.substring(0, 5)}</td>
                 <td>{schedule.interval + " минут"} </td>
                 <td>
-                    <button className="btn btn-warning" onClick={() => props.setIdToRemove(schedule.id)}>Удалить
+                    <button className="btn btn-danger" onClick={() => props.setIdToRemove(schedule.id)}>Удалить
                     </button>
                 </td>
             </tr>

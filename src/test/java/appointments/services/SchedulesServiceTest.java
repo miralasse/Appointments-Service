@@ -1,12 +1,16 @@
 package appointments.services;
 
 import appointments.TestHelper;
+import appointments.domain.Reservation;
+import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.domain.Specialist;
 import appointments.dto.ScheduleDTO;
 import appointments.dto.ServiceSimpleDTO;
 import appointments.dto.SpecialistSimpleDTO;
+import appointments.exceptions.EntityDependencyException;
 import appointments.exceptions.ScheduleNotFoundException;
+import appointments.repos.ReservationsRepository;
 import appointments.repos.ServicesRepository;
 import appointments.repos.SpecialistsRepository;
 import org.junit.Before;
@@ -25,6 +29,7 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,6 +56,7 @@ public class SchedulesServiceTest {
     private Specialist specialist;
     private SpecialistSimpleDTO specialistSimpleDTO;
     private List<ServiceSimpleDTO> serviceSimpleDTOs;
+    private List<Service> services;
 
     @Autowired
     private TestHelper testHelper;
@@ -64,13 +70,16 @@ public class SchedulesServiceTest {
     @Autowired
     private SchedulesService schedulesService;
 
+    @Autowired
+    private ReservationsRepository reservationsRepository;
+
     @Before
     public void setUp() {
 
         testHelper.refill();
         specialist = specialistsRepository.findOneByName(SPECIALIST_NAME).orElse(null);
         specialistSimpleDTO = new SpecialistSimpleDTO(specialist.getId(), specialist.getName());
-        List<Service> services = servicesRepository.findAll();
+        services = servicesRepository.findAll();
         serviceSimpleDTOs = services
                 .stream()
                 .map(service -> new ServiceSimpleDTO(service.getId(), service.getName()))
@@ -225,6 +234,47 @@ public class SchedulesServiceTest {
         assertThat(schedulesService.getSchedules(PAGE_REQUEST, DATE)).doesNotContain(testScheduleDTO);
         assertThat(expectedSize).isEqualTo(actualSize);
     }
+
+
+    @Test(expected = EntityDependencyException.class)
+    @Transactional
+    public void testRemoveScheduleUsedInReservation() {
+
+        final Reservation reservation = reservationsRepository.findAll().get(0);
+
+        final long id = schedulesService
+                .addSchedule(
+                        new ScheduleDTO(
+                                null,
+                                specialistSimpleDTO,
+                                ROOM_NUMBER,
+                                DATE,
+                                serviceSimpleDTOs,
+                                START_TIME,
+                                END_TIME,
+                                INTERVAL,
+                                singletonList(reservation.getId())
+                        )
+                ).getId();
+
+        final Schedule testSchedule = new Schedule(
+                id,
+                specialist,
+                ROOM_NUMBER,
+                DATE,
+                services,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                singletonList(reservation)
+        );
+
+        reservation.setSchedule(testSchedule);
+        reservationsRepository.flush();
+
+        schedulesService.removeSchedule(id);
+    }
+
 
     @Test(expected = IllegalArgumentException.class)
     @Transactional

@@ -194,11 +194,14 @@ public class ReservationsService {
         final Reservation savedReservation = reservationsRepository.save(reservation);
         log.info("Added new reservation: {}", savedReservation);
 
+        savedReservation.getSchedule().getReservations().add(savedReservation);
+        schedulesRepository.flush();
+
         return mapper.reservationToReservationDTO(savedReservation);
     }
 
     @Transactional
-    private void checkIfTimeInSchedule(Schedule schedule, LocalDateTime wantedDateTime) {
+    void checkIfTimeInSchedule(Schedule schedule, LocalDateTime wantedDateTime) {
 
         final LocalDate wantedDate = wantedDateTime.toLocalDate();
 

@@ -1,9 +1,11 @@
 package appointments.integration;
 
 import appointments.TestHelper;
+import appointments.domain.Schedule;
 import appointments.domain.Service;
 import appointments.dto.ActiveDTO;
 import appointments.integration.utils.TestRestClient;
+import appointments.repos.SchedulesRepository;
 import appointments.repos.ServicesRepository;
 import appointments.services.ServicesService;
 import org.junit.Before;
@@ -18,12 +20,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static appointments.utils.Constants.SERVICE_IS_ALREADY_USED;
 import static appointments.utils.Constants.SERVICE_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SERVICE_NULL_NAME_MESSAGE;
 import static appointments.utils.Constants.SERVICE_WRONG_LENGTH_MESSAGE;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -48,6 +53,9 @@ public class ServicesControllerIntegrationTest {
 
     @Autowired
     private ServicesRepository servicesRepository;
+
+    @Autowired
+    private SchedulesRepository schedulesRepository;
 
     private TestRestClient restClient;
 
@@ -187,6 +195,39 @@ public class ServicesControllerIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isEqualTo(SERVICE_NOT_FOUND_MESSAGE + id);
     }
+
+    @Test
+    @Transactional
+    public void testDeleteServiceUsedInSchedule() {
+
+        final int id = servicesService
+                .addService(TEST_SERVICE_NAME, true)
+                .getId();
+
+        final Service testService = new Service(id, TEST_SERVICE_NAME, true);
+
+        final Schedule schedule = schedulesRepository.findAll().get(0);
+        schedule.setServices(singletonList(testService));
+
+        schedulesRepository.flush();
+
+        assertThat(servicesRepository.findAll()).contains(testService);
+
+        final ResponseEntity<String> deleteResponse = restClient.exchange(
+                endpointWithId,
+                jSessionId,
+                HttpMethod.DELETE,
+                String.class,
+                id
+        );
+
+        assertThat(servicesRepository.findAll()).contains(testService);
+
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(deleteResponse.getBody()).isEqualTo(SERVICE_IS_ALREADY_USED);
+    }
+
+
 
     @Test
     public void testPostService() {

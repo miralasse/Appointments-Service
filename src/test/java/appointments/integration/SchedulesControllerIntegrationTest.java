@@ -11,6 +11,7 @@ import appointments.dto.SpecialistSimpleDTO;
 import appointments.integration.utils.RestPageImpl;
 import appointments.integration.utils.TestRestClient;
 import appointments.mappers.ScheduleMapper;
+import appointments.repos.ReservationsRepository;
 import appointments.repos.SchedulesRepository;
 import appointments.repos.ServicesRepository;
 import appointments.repos.SpecialistsRepository;
@@ -44,9 +45,11 @@ import static appointments.utils.Constants.SCHEDULE_EMPTY_SERVICES_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_SPECIALIST_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_EMPTY_START_TIME_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_INCORRECT_DATE_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_IS_ALREADY_USED;
 import static appointments.utils.Constants.SCHEDULE_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_WRONG_INTERVAL_LENGTH;
 import static appointments.utils.Constants.SCHEDULE_WRONG_ROOM_NUMBER_LENGTH;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -95,6 +98,9 @@ public class SchedulesControllerIntegrationTest {
 
     @Autowired
     private SchedulesRepository schedulesRepository;
+
+    @Autowired
+    private ReservationsRepository reservationsRepository;
 
     @Autowired
     private SchedulesService schedulesService;
@@ -268,6 +274,59 @@ public class SchedulesControllerIntegrationTest {
         assertThat(schedulesAfterRemoving).doesNotContain(testSchedule);
         assertThat(expectedSize).isEqualTo(actualSize);
     }
+
+    @Test
+    @Transactional
+    public void testDeleteScheduleUsedInReservation() {
+
+        final Reservation reservation = reservationsRepository.findAll().get(0);
+
+        final long id = schedulesService
+                .addSchedule(
+                        new ScheduleDTO(
+                                null,
+                                specialistSimpleDTO,
+                                ROOM_NUMBER,
+                                DATE,
+                                serviceSimpleDTOs,
+                                START_TIME,
+                                END_TIME,
+                                INTERVAL,
+                                singletonList(reservation.getId())
+                        )
+                ).getId();
+
+        final Schedule testSchedule = new Schedule(
+                id,
+                specialist,
+                ROOM_NUMBER,
+                DATE,
+                services,
+                START_TIME,
+                END_TIME,
+                INTERVAL,
+                singletonList(reservation)
+        );
+
+        reservation.setSchedule(testSchedule);
+        reservationsRepository.flush();
+
+        assertThat(schedulesRepository.findAll()).contains(testSchedule);
+
+        final ResponseEntity<String> deleteResponse = restClient.exchange(
+                endpointWithId,
+                jSessionId,
+                HttpMethod.DELETE,
+                String.class,
+                id
+        );
+
+        assertThat(schedulesRepository.findAll()).contains(testSchedule);
+
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(deleteResponse.getBody()).isEqualTo(SCHEDULE_IS_ALREADY_USED);
+    }
+
 
     @Test
     @Transactional

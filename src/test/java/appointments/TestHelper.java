@@ -52,6 +52,7 @@ public class TestHelper {
     private final static String ROOM_NUMBER_SECOND = "109";
     private final static String ROOM_NUMBER_THIRD = "32";
 
+    private final static String DEFAULT_ORGANIZATION_NAME = "Отделение ПФР по Белгородской области";
     private final static String ORGANIZATION_NAME_FIRST = "Управление образования г. Белгород";
     private final static String ORGANIZATION_NAME_SECOND = "Управление образования г. Старый Оскол";
     private final static String ORGANIZATION_NAME_THIRD
@@ -213,6 +214,12 @@ public class TestHelper {
 
     /** Метод для первичного наполнения таблицы organization */
     public void initOrganizations() {
+
+        organizationsRepository.save(new Organization(
+                null, DEFAULT_ORGANIZATION_NAME,
+                "г. Белгород, ул.Преображенская, д.87",
+                "+7(4722)30-69-67 Режим работы: пн - чт: 8-30 до 17-30, пт: 8-30 до 16-15"
+        ));
 
         organizationsRepository.save(new Organization(
                 null, ORGANIZATION_NAME_FIRST,

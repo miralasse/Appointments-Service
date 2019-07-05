@@ -1,7 +1,6 @@
 package appointments.config;
 
 import appointments.domain.Child;
-import appointments.domain.Organization;
 import appointments.domain.Reservation;
 import appointments.domain.Schedule;
 import appointments.domain.Service;
@@ -49,10 +48,7 @@ public class DataLoader implements ApplicationRunner {
     private final static String ROOM_NUMBER_SECOND = "109";
     private final static String ROOM_NUMBER_THIRD = "32";
 
-    private final static String ORGANIZATION_NAME_FIRST = "Управление образования г. Белгород";
-    private final static String ORGANIZATION_NAME_SECOND = "Управление образования г. Старый Оскол";
-    private final static String ORGANIZATION_NAME_THIRD
-            = "Департамент здравоохранения и социальной защиты населения Белгородской области";
+    private final static String DEFAULT_ORGANIZATION_NAME = "Отделение ПФР по Белгородской области";
 
     private final static int YEAR = 2019;
     private final static int INTERVAL = 15;
@@ -121,7 +117,6 @@ public class DataLoader implements ApplicationRunner {
     /** Метод для первичного наполнения всех таблиц */
     private void initAll() {
         initChildren();
-        initOrganizations();
         initServices();
         initSpecialists();
         initSchedules();
@@ -151,25 +146,6 @@ public class DataLoader implements ApplicationRunner {
         ));
     }
 
-    /** Метод для первичного наполнения таблицы organization */
-    private void initOrganizations() {
-
-        organizationsRepository.save(new Organization(
-                null, ORGANIZATION_NAME_FIRST,
-                "г. Белгород, ул. Попова 25а", "+7(4722)32-68-95"
-        ));
-
-        organizationsRepository.save(new Organization(
-                null, ORGANIZATION_NAME_SECOND,
-                "Белгородская обл., г. Старый Оскол, ул. Комсомольская, 43", "+7(4725)22‑03-38"
-        ));
-
-        organizationsRepository.save(new Organization(
-                null, ORGANIZATION_NAME_THIRD,
-                "г. Белгород, Свято-Троицкий бул., 18", "+7(4722)23‑56-46"
-        ));
-    }
-
     /** Метод для первичного наполнения таблицы services */
     private void initServices() {
 
@@ -187,17 +163,17 @@ public class DataLoader implements ApplicationRunner {
 
         specialistsRepository.save(new Specialist(
                 null, SPECIALIST_NAME_FIRST, true,
-                organizationsRepository.findOneByName(ORGANIZATION_NAME_FIRST).orElse(null)
+                organizationsRepository.findOneByName(DEFAULT_ORGANIZATION_NAME).orElse(null)
         ));
 
         specialistsRepository.save(new Specialist(
                 null, SPECIALIST_NAME_SECOND, true,
-                organizationsRepository.findOneByName(ORGANIZATION_NAME_FIRST).orElse(null)
+                organizationsRepository.findOneByName(DEFAULT_ORGANIZATION_NAME).orElse(null)
         ));
 
         specialistsRepository.save(new Specialist(
                 null, SPECIALIST_NAME_THIRD, true,
-                organizationsRepository.findOneByName(ORGANIZATION_NAME_SECOND).orElse(null)
+                organizationsRepository.findOneByName(DEFAULT_ORGANIZATION_NAME).orElse(null)
         ));
     }
 
@@ -361,18 +337,12 @@ public class DataLoader implements ApplicationRunner {
         clearSchedules();
         clearSpecialists();
         clearServices();
-        clearOrganizations();
         clearChildren();
     }
 
     /** Метод для очистки таблицы children */
     private void clearChildren() {
         childrenRepository.deleteAll();
-    }
-
-    /** Метод для очистки таблицы organizations */
-    private void clearOrganizations() {
-        organizationsRepository.deleteAll();
     }
 
     /** Метод для очистки таблицы services */

@@ -3,10 +3,12 @@ package appointments.services;
 import appointments.domain.Organization;
 import appointments.domain.Specialist;
 import appointments.dto.SpecialistDTO;
+import appointments.exceptions.EntityDependencyException;
 import appointments.exceptions.OrganizationNotFoundException;
 import appointments.exceptions.SpecialistNotFoundException;
 import appointments.mappers.SpecialistMapper;
 import appointments.repos.OrganizationsRepository;
+import appointments.repos.SchedulesRepository;
 import appointments.repos.SpecialistsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static appointments.utils.Constants.ORGANIZATION_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_EMPTY_ID_MESSAGE;
+import static appointments.utils.Constants.SPECIALIST_IS_ALREADY_USED;
 import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
 import static java.util.stream.Collectors.toList;
 
@@ -37,6 +40,9 @@ public class SpecialistsService {
     /** Поле для хранения экземпляра репозитория организаций */
     private OrganizationsRepository organizationsRepository;
 
+    /** Поле для хранения экземпляра репозитория специалистов */
+    private SchedulesRepository schedulesRepository;
+
     /** Поле для хранения экземпляра маппера специалистов в DTO */
     private SpecialistMapper mapper;
 
@@ -44,10 +50,12 @@ public class SpecialistsService {
     public SpecialistsService(
             SpecialistsRepository specialistsRepository,
             OrganizationsRepository organizationsRepository,
+            SchedulesRepository schedulesRepository,
             SpecialistMapper mapper
     ) {
         this.specialistsRepository = specialistsRepository;
         this.organizationsRepository = organizationsRepository;
+        this.schedulesRepository = schedulesRepository;
         this.mapper = mapper;
     }
 
@@ -136,6 +144,10 @@ public class SpecialistsService {
                 .findById(id)
                 .orElseThrow(() -> new SpecialistNotFoundException(SPECIALIST_NOT_FOUND_MESSAGE + id));
 
+        if (schedulesRepository.existsBySpecialist(specialist)) {
+            throw new EntityDependencyException(SPECIALIST_IS_ALREADY_USED);
+        }
+
         specialistsRepository.delete(specialist);
 
         log.info("Specialist with id = {} deleted", id);
@@ -166,7 +178,7 @@ public class SpecialistsService {
 
         log.debug("Getting list of all specialists");
 
-        return mapper.specialistListToSpecialistDTOList(specialistsRepository.findAll());
+        return mapper.specialistListToSpecialistDTOList(specialistsRepository.findAllByOrderByName());
     }
 
     /** Метод для получения списка только активных специалистов */
@@ -177,7 +189,7 @@ public class SpecialistsService {
 
         return mapper.specialistListToSpecialistDTOList(
                 specialistsRepository
-                        .findAll()
+                        .findAllByOrderByName()
                         .stream()
                         .filter(Specialist::isActive)
                         .collect(toList())
