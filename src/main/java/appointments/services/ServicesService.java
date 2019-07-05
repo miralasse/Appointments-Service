@@ -1,7 +1,9 @@
 package appointments.services;
 
 import appointments.domain.Service;
+import appointments.exceptions.EntityDependencyException;
 import appointments.exceptions.ServiceNotFoundException;
+import appointments.repos.SchedulesRepository;
 import appointments.repos.ServicesRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static appointments.utils.Constants.SERVICE_EMPTY_ID_MESSAGE;
+import static appointments.utils.Constants.SERVICE_IS_ALREADY_USED;
 import static appointments.utils.Constants.SERVICE_NOT_FOUND_MESSAGE;
 import static java.util.stream.Collectors.toList;
 
@@ -24,12 +27,19 @@ import static java.util.stream.Collectors.toList;
 @org.springframework.stereotype.Service
 public class ServicesService {
 
-    /** Поле для хранения экземпляра репозитория */
+    /** Поле для хранения экземпляра репозитория услуг */
     private ServicesRepository servicesRepository;
 
+    /** Поле для хранения экземпляра репозитория расписаний */
+    private SchedulesRepository schedulesRepository;
+
     @Autowired
-    public ServicesService(ServicesRepository servicesRepository) {
+    public ServicesService(
+            ServicesRepository servicesRepository,
+            SchedulesRepository schedulesRepository
+    ) {
         this.servicesRepository = servicesRepository;
+        this.schedulesRepository = schedulesRepository;
     }
 
     /** Метод для добавления новой цели обращения (услуги) в справочник */
@@ -54,6 +64,10 @@ public class ServicesService {
         final Service service = servicesRepository
                 .findById(id)
                 .orElseThrow(() -> new ServiceNotFoundException(SERVICE_NOT_FOUND_MESSAGE + id));
+
+        if (schedulesRepository.existsByServices(service)) {
+            throw new EntityDependencyException(SERVICE_IS_ALREADY_USED);
+        }
 
         servicesRepository.delete(service);
 
@@ -101,7 +115,7 @@ public class ServicesService {
 
         log.debug("Getting list of all services");
 
-        return servicesRepository.findAll();
+        return servicesRepository.findAllByOrderByName();
     }
 
 
@@ -112,7 +126,7 @@ public class ServicesService {
         log.debug("Getting list of active services");
 
         return servicesRepository
-                .findAll()
+                .findAllByOrderByName()
                 .stream()
                 .filter(Service::isActive)
                 .collect(toList());

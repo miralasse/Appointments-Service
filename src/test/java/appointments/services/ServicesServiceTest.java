@@ -1,8 +1,11 @@
 package appointments.services;
 
 import appointments.TestHelper;
+import appointments.domain.Schedule;
 import appointments.domain.Service;
+import appointments.exceptions.EntityDependencyException;
 import appointments.exceptions.ServiceNotFoundException;
+import appointments.repos.SchedulesRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -30,6 +34,9 @@ public class ServicesServiceTest {
 
     @Autowired
     private ServicesService servicesService;
+
+    @Autowired
+    private SchedulesRepository schedulesRepository;
 
     @Before
     public void setUp() {
@@ -70,6 +77,25 @@ public class ServicesServiceTest {
 
         assertThat(servicesService.getServices()).doesNotContain(testService);
         assertThat(expectedSize).isEqualTo(actualSize);
+    }
+
+    @Test(expected = EntityDependencyException.class)
+    @Transactional
+    public void testRemoveServiceUsedInSchedule() {
+
+
+        final int id = servicesService
+                .addService(TEST_SERVICE_NAME, true)
+                .getId();
+
+        final Service testService = new Service(id, TEST_SERVICE_NAME, true);
+
+        final Schedule schedule = schedulesRepository.findAll().get(0);
+        schedule.setServices(singletonList(testService));
+
+        schedulesRepository.flush();
+
+        servicesService.removeService(id);
     }
 
     @Test(expected = IllegalArgumentException.class)

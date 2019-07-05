@@ -1,11 +1,13 @@
 import React from 'react';
-import 'bootstrap/dist/css/bootstrap.css';
+
 import DatePicker, {registerLocale} from "react-datepicker";
 import ru from "date-fns/locale/ru";
 
+import './add-schedule-form.css';
+
 registerLocale("ru", ru);
 
-class Form extends React.Component {
+class AddScheduleForm extends React.Component {
 
     constructor(props) {
 
@@ -92,7 +94,6 @@ class Form extends React.Component {
             startTime: this.formatTime(startTime),
             endTime: this.formatTime(endTime)
         };
-        console.log(schedule);
 
         this.addSchedule(schedule);
         this.setState(this.initialState);
@@ -112,12 +113,11 @@ class Form extends React.Component {
                 body: JSON.stringify(schedule)
             }
         )
-            .then((result) => {
-                console.log('Request succeeded', result);
+            .then(() => {
                 this.getAllSchedules();
             })
-            .catch(function (error) {
-                console.log('Request failed', error);
+            .catch((error) => {
+                alert(`При добавлении возникла ошибка: ${error}`);
             });
     };
 
@@ -136,15 +136,15 @@ class Form extends React.Component {
         const timeCaptionForTimePicker = "Время";
         const localeForTimePicker = "ru";
 
-        const allServices = this.props.services;
-        const allSpecialists = this.props.specialists;
+        const activeServices = this.props.services;
+        const activeSpecialists = this.props.specialists;
 
         const {specialist, roomNumber, date, services, startTime, endTime, interval} = this.state;
 
         const specialistId = specialist.id;
         const servicesIds = services.map(serviceDTO => serviceDTO.id);
 
-        const isEnabled = specialistId && roomNumber && date && servicesIds && startTime && endTime && interval;
+        const isEnabled = specialistId && roomNumber && date && servicesIds.length && startTime && endTime && interval;
 
         return (
 
@@ -161,7 +161,7 @@ class Form extends React.Component {
                                 <option value="">
                                     --Выбрать специалиста--
                                 </option>
-                                {allSpecialists.map(specialist => (
+                                {activeSpecialists.map(specialist => (
                                     <option key={specialist.id}
                                             value={specialist.id}
                                             label={specialist.name}
@@ -179,7 +179,7 @@ class Form extends React.Component {
                                     onChange={this.handleChangeServices}
                                     className="form-control"
                                     id="selectServices">
-                                {allServices.map(service => (
+                                {activeServices.map(service => (
                                     <option key={service.id}
                                             value={service.id}
                                             label={service.name}
@@ -284,4 +284,4 @@ class Form extends React.Component {
     }
 }
 
-export default Form;
+export default AddScheduleForm;

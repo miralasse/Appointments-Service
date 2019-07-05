@@ -3,10 +3,12 @@ package appointments.services;
 import appointments.domain.Schedule;
 import appointments.dto.ScheduleDTO;
 import appointments.dto.ServiceSimpleDTO;
+import appointments.exceptions.EntityDependencyException;
 import appointments.exceptions.ScheduleNotFoundException;
 import appointments.exceptions.ServiceNotFoundException;
 import appointments.exceptions.SpecialistNotFoundException;
 import appointments.mappers.ScheduleMapper;
+import appointments.repos.ReservationsRepository;
 import appointments.repos.SchedulesRepository;
 import appointments.repos.ServicesRepository;
 import appointments.repos.SpecialistsRepository;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 
 import static appointments.utils.Constants.SCHEDULE_EMPTY_ID_MESSAGE;
 import static appointments.utils.Constants.SCHEDULE_INCORRECT_DATE_MESSAGE;
+import static appointments.utils.Constants.SCHEDULE_IS_ALREADY_USED;
 import static appointments.utils.Constants.SCHEDULE_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SERVICE_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
@@ -39,6 +42,9 @@ public class SchedulesService {
     /** Поле для хранения экземпляра репозитория */
     private SchedulesRepository schedulesRepository;
 
+    /** Поле для хранения экземпляра записей на прием */
+    private ReservationsRepository reservationsRepository;
+
     /** Поле для хранения экземпляра репозитория услуг */
     private ServicesRepository servicesRepository;
 
@@ -51,11 +57,13 @@ public class SchedulesService {
     @Autowired
     public SchedulesService(
             SchedulesRepository schedulesRepository,
+            ReservationsRepository reservationsRepository,
             ServicesRepository servicesRepository,
             SpecialistsRepository specialistsRepository,
             ScheduleMapper mapper
     ) {
         this.schedulesRepository = schedulesRepository;
+        this.reservationsRepository = reservationsRepository;
         this.servicesRepository = servicesRepository;
         this.specialistsRepository = specialistsRepository;
         this.mapper = mapper;
@@ -111,6 +119,10 @@ public class SchedulesService {
         final Schedule schedule = schedulesRepository
                 .findById(id)
                 .orElseThrow(() -> new ScheduleNotFoundException(SCHEDULE_NOT_FOUND_MESSAGE + id));
+
+        if (reservationsRepository.existsBySchedule(schedule)) {
+            throw new EntityDependencyException(SCHEDULE_IS_ALREADY_USED);
+        }
 
         schedulesRepository.delete(schedule);
 

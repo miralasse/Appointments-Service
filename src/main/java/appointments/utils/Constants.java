@@ -104,6 +104,9 @@ public class Constants {
     public static final String SERVICE_NOT_FOUND_MESSAGE = "Услуга не найдена: ";
     public static final String SERVICE_EMPTY_ID_MESSAGE = "ID услуги не должен быть пустым";
 
+    public static final String SERVICE_IS_ALREADY_USED
+            = "Невозможно удалить услугу, т.к. она задействована в существующих расписаниях";
+
 
 
     /** Константы для сущности Specialist и класса SpecialistsService */
@@ -123,6 +126,9 @@ public class Constants {
 
     public static final String SPECIALIST_EMPTY_ORGANIZATION_MESSAGE
             = "Должна быть указана организация, к которой относится специалист";
+
+    public static final String SPECIALIST_IS_ALREADY_USED
+            = "Невозможно удалить специалиста, т.к. он задействован в существующих расписаниях";
 
 
 
@@ -156,6 +162,9 @@ public class Constants {
 
     public static final String SCHEDULE_EMPTY_INTERVAL_MESSAGE
             = "Для расписания должен быть указан интервал приема (время на один талон) в минутах";
+
+    public static final String SCHEDULE_IS_ALREADY_USED
+            = "Невозможно удалить расписание, т.к. в нем уже есть записи на прием";
 
 
 

@@ -1,6 +1,7 @@
 package appointments.repos;
 
 import appointments.domain.Reservation;
+import appointments.domain.Schedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ReservationsRepository extends JpaRepository<Reservation, Long> {
+
+    boolean existsBySchedule(Schedule schedule);
 }

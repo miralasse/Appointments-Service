@@ -1,8 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import './warning-popup.css';
 
-export class FormPopup extends React.Component {
+
+export class WarningPopup extends React.Component {
 
     constructor(props) {
 
@@ -37,8 +39,8 @@ export class FormPopup extends React.Component {
         }
 
         ReactDOM.render(
-            <div className="popup-overlay">
-                <div className="popup-content">
+            <div className="warning-popup-overlay">
+                <div className="warning-popup-content">
                     {this.props.children}
                 </div>
             </div>,
@@ -47,4 +49,4 @@ export class FormPopup extends React.Component {
     }
 }
 
-export default FormPopup;
+export default WarningPopup;

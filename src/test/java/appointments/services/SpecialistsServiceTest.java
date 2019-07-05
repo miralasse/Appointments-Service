@@ -2,10 +2,13 @@ package appointments.services;
 
 import appointments.TestHelper;
 import appointments.domain.Organization;
+import appointments.domain.Schedule;
 import appointments.domain.Specialist;
 import appointments.dto.SpecialistDTO;
+import appointments.exceptions.EntityDependencyException;
 import appointments.exceptions.SpecialistNotFoundException;
 import appointments.repos.OrganizationsRepository;
+import appointments.repos.SchedulesRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +41,9 @@ public class SpecialistsServiceTest {
 
     @Autowired
     private SpecialistsService specialistsService;
+
+    @Autowired
+    private SchedulesRepository schedulesRepository;
 
 
     @Before
@@ -128,6 +134,7 @@ public class SpecialistsServiceTest {
         assertThat(actualSpecialistDTO.getOrganizationId()).isEqualTo(testSpecialist.getOrganization().getId());
     }
 
+
     @Test(expected = IllegalArgumentException.class)
     @Transactional
     public void testEditSpecialistWithNullId() {
@@ -163,6 +170,27 @@ public class SpecialistsServiceTest {
 
         assertThat(specialistsService.getSpecialists()).doesNotContain(testSpecialistDTO);
         assertThat(expectedSize).isEqualTo(actualSize);
+    }
+
+
+    @Test(expected = EntityDependencyException.class)
+    @Transactional
+    public void testRemoveSpecialistUsedInSchedule() {
+
+        final int id = specialistsService
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
+                ).getId();
+
+        final Specialist testSpecialist
+                = new Specialist(id, TEST_SPECIALIST_NAME, true, organization);
+
+        final Schedule schedule = schedulesRepository.findAll().get(0);
+        schedule.setSpecialist(testSpecialist);
+
+        schedulesRepository.flush();
+
+        specialistsService.removeSpecialist(id);
     }
 
     @Test(expected = IllegalArgumentException.class)

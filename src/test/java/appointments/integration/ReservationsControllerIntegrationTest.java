@@ -270,7 +270,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostSchedule() {
+    public void testPostReservation() {
 
         final List<Reservation> reservationsBeforeAdding = reservationsRepository.findAll();
         final int expectedSize = reservationsBeforeAdding.size() + 1;
@@ -307,7 +307,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithNullDateTime() {
+    public void testPostReservationWithNullDateTime() {
 
         final ReservationDTO testReservationDTO
             = new ReservationDTO(null, null, schedule.getId(), service.getId(), true, child.getId());
@@ -326,7 +326,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithNullSchedule() {
+    public void testPostReservationWithNullSchedule() {
 
         final ReservationDTO testReservationDTO
             = new ReservationDTO(null, DATE_TIME, null, service.getId(), true, child.getId());
@@ -345,7 +345,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithWrongSchedule() {
+    public void testPostReservationWithWrongSchedule() {
 
         final long wrongId = Long.MIN_VALUE;
 
@@ -366,7 +366,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithNullService() {
+    public void testPostReservationWithNullService() {
 
         final ReservationDTO testReservationDTO
             = new ReservationDTO(null, DATE_TIME, schedule.getId(), null, true, child.getId());
@@ -385,7 +385,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithWrongService() {
+    public void testPostReservationWithWrongService() {
 
         final int wrongId = Integer.MIN_VALUE;
 
@@ -406,7 +406,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithNullChild() {
+    public void testPostReservationWithNullChild() {
 
         final ReservationDTO testReservationDTO
             = new ReservationDTO(null, DATE_TIME, schedule.getId(), service.getId(), true, null);
@@ -425,7 +425,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithWrongChild() {
+    public void testPostReservationWithWrongChild() {
 
         final int wrongId = Integer.MIN_VALUE;
 
@@ -446,7 +446,7 @@ public class ReservationsControllerIntegrationTest {
 
     @Test
     @Transactional
-    public void testPostScheduleWithUserAuth() {
+    public void testPostReservationWithUserAuth() {
 
         jSessionId = testHelper.loginAsUser(restClient);
 

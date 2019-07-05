@@ -2,12 +2,14 @@ package appointments.integration;
 
 import appointments.TestHelper;
 import appointments.domain.Organization;
+import appointments.domain.Schedule;
 import appointments.domain.Specialist;
 import appointments.dto.ActiveDTO;
 import appointments.dto.SpecialistDTO;
 import appointments.integration.utils.TestRestClient;
 import appointments.mappers.SpecialistMapper;
 import appointments.repos.OrganizationsRepository;
+import appointments.repos.SchedulesRepository;
 import appointments.repos.SpecialistsRepository;
 import appointments.services.SpecialistsService;
 import org.junit.Before;
@@ -22,12 +24,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static appointments.utils.Constants.ORGANIZATION_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_EMPTY_NAME_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_EMPTY_ORGANIZATION_MESSAGE;
+import static appointments.utils.Constants.SPECIALIST_IS_ALREADY_USED;
 import static appointments.utils.Constants.SPECIALIST_NOT_FOUND_MESSAGE;
 import static appointments.utils.Constants.SPECIALIST_WRONG_NAME_LENGTH;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,6 +64,9 @@ public class SpecialistsControllerIntegrationTest {
 
     @Autowired
     private SpecialistsRepository specialistsRepository;
+
+    @Autowired
+    private SchedulesRepository schedulesRepository;
 
     @Autowired
     private SpecialistMapper mapper;
@@ -196,6 +203,41 @@ public class SpecialistsControllerIntegrationTest {
         assertThat(specialistsAfterRemoving).doesNotContain(testSpecialist);
         assertThat(expectedSize).isEqualTo(actualSize);
     }
+
+
+    @Test
+    @Transactional
+    public void testDeleteSpecialistUsedInSchedule() {
+
+        final int id = specialistsService
+                .addSpecialist(
+                        new SpecialistDTO(null, TEST_SPECIALIST_NAME, true, organization.getId())
+                ).getId();
+
+        final Specialist testSpecialist
+                = new Specialist(id, TEST_SPECIALIST_NAME, true, organization);
+
+        final Schedule schedule = schedulesRepository.findAll().get(0);
+        schedule.setSpecialist(testSpecialist);
+
+        schedulesRepository.flush();
+
+        assertThat(specialistsRepository.findAll()).contains(testSpecialist);
+
+        final ResponseEntity<String> deleteResponse = restClient.exchange(
+                endpointWithId,
+                jSessionId,
+                HttpMethod.DELETE,
+                String.class,
+                id
+        );
+
+        assertThat(specialistsRepository.findAll()).contains(testSpecialist);
+
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(deleteResponse.getBody()).isEqualTo(SPECIALIST_IS_ALREADY_USED);
+    }
+
 
     @Test
     public void testDeleteSpecialistByIdWithWrongId() {
